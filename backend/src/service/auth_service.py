@@ -5,116 +5,133 @@ import time
 import json
 from typing import Optional
 from urllib.parse import urlencode
-
+import hashlib
 from flask import Request, Response, make_response
 from cryptography.fernet import Fernet
 
+from src.models.auth import AuthConfig
 from src.models.login import LoginConfig, LoginState
 
 
 class AuthService:
-    def __init__(
-        self, 
-        req: Request, 
-        res: Optional[Response] = None, 
-        config: Optional[LoginConfig] = None
-    ):
-        self.req = req
-        # If no Response object was passed in, create one
-        self.res = res if res else make_response()
-        self.config = config
-        self.cookie_prefix = 'login#'
-        self.login_state_cookie_separator = '-'
+    """
+    static values shared by all instances of classes
+    """
+    _cookie_prefix = 'login#'
+    _login_state_cookie_separator = '-'
 
-        # Disable caching
-        self._disable_caching()
+    def __init__(self, auth_config: AuthConfig):
+        """
+        dynamic values of auth config
+        """
+        self.client_id = auth_config.client_id
+        self.client_secret = auth_config.client_secret
+        self.login_state_secret = auth_config.login_state_secret
+        self.login_url = auth_config.login_url
+        self.redirect_uri = auth_config.redirect_uri
+        self.wristband_application_domain = auth_config.wristband_application_domain
+        self.custom_application_login_page_url = auth_config.custom_application_login_page_url
+        self.dangerously_disable_secure_cookies = auth_config.dangerously_disable_secure_cookies
+        self.root_domain = auth_config.root_domain 
+        self.scopes = auth_config.scopes
+        self.use_custom_domains = auth_config.use_custom_domains
+        self.use_tenant_subdomains = auth_config.use_tenant_subdomains
+        # TODO - validation on auth config fields
 
-        # Determine domain-related values
-        self.tenant_custom_domain = self._resolve_tenant_domain(self.resolve_tenant_from_custom_domain)
-        self.tenant_domain_name = self._resolve_tenant_domain(self.resolve_tenant_from_domain)
-        self.default_tenant_custom_domain = self._get_default_domain('default_tenant_custom_domain')
-        self.default_tenant_domain_name = self._get_default_domain('default_tenant_domain')
 
-    def login(self) -> Response:
-        # If no domain is determined, do a simple 302 redirect
+    def login(
+        self,
+        req: Request,
+        config: LoginConfig = LoginConfig()
+    ) -> Response:
+        """
+        Initiates the login process by redirecting the user to the OAuth2 authorization endpoint.
+
+        Args:
+            req (Request): The Flask request object.
+            config (LoginConfig, optional): Configuration for the login process. Defaults to LoginConfig().
+
+        Returns:
+            Response: The Flask response object with the appropriate redirection headers set.
+        """
+        res = make_response()
+
+        res.headers['Cache-Control'] = 'no-store'
+        res.headers['Pragma'] = 'no-cache'
+
+        # Determine which domain-related values are present as it will be needed for the authorize URL.
+        tenant_custom_domain: str  = self._resolve_tenant_custom_domain_param(req)
+        tenant_domain_name: str = self._resolve_tenant_domain_name(req, self.root_domain)
+        default_tenant_custom_domain: Optional[str] = config.default_tenant_custom_domain
+        default_tenant_domain_name: Optional[str] = config.default_tenant_domain
+
+        # In the event we cannot determine either a tenant custom domain or subdomain, send the user to app-level login.
         if not any([
-            self.tenant_custom_domain,
-            self.tenant_domain_name,
-            self.default_tenant_custom_domain,
-            self.default_tenant_domain_name
+            tenant_custom_domain,
+            tenant_domain_name,
+            default_tenant_custom_domain,
+            default_tenant_domain_name
         ]):
-            self.res.status_code = 302
-            self.res.headers['Location'] = f'https://{os.environ.get("APPLICATION_VANITY_DOMAIN")}/login'
-            return self.res
+            applogin_url = self.custom_application_login_page_url or f'https://{self.wristband_application_domain}/login'
+            res.status_code = 302
+            res.headers['Location'] = applogin_url
+            return res
 
-        # Create and manage login state
-        self.login_state = self.create_login_state(
-            redirect_uri='https://localhost:8080/api/auth/callback',
-            config=self.config
-        )
-        self._manage_login_state_cookies()
+        # Create the login state which will be cached in a cookie so that it can be accessed in the callback.
+        login_state: LoginState = self._create_login_state(req, self.redirect_uri, config.custom_state)
 
-        # Redirect to OAuth provider
-        oauth_url = self.get_oauth_authorize_url()
-        self.res.status_code = 302
-        self.res.headers['Location'] = oauth_url
-        return self.res
+        # Clear any stale login state cookies and add a new one fo rthe current request.
+        self._clear_oldest_login_state_cookie(req, res)
+        encrypted_login_state: bytes = self._encrypt_login_state(login_state, self.login_state_secret)
+        self._create_login_state_cookie(res, login_state.state, encrypted_login_state, self.dangerously_disable_secure_cookies)
 
-    def logout(self) -> Response:
-        # Clear relevant cookies
-        if self.req.cookies:
-            for cookie_name in self.req.cookies:
-                if cookie_name.startswith(self.cookie_prefix):
-                    self.res.delete_cookie(cookie_name)
+        # Create the Wristband Authorize Endpoint URL which the user will get redirectd to.
+        authorize_url: str = self._get_oauth_authorize_url(req, login_state, tenant_custom_domain, tenant_domain_name, default_tenant_custom_domain, default_tenant_domain_name)
 
-        # 302 redirect to home
-        self.res.status_code = 302
-        self.res.headers['Location'] = '/'
-        return self.res
+        # Perform the redirect to Wristband's Authorize Endpoint.
+        res.status_code = 302
+        res.headers['Location'] = authorize_url
+        return res
 
-    def _disable_caching(self):
-        self.res.headers['Cache-Control'] = 'no-store'
-        self.res.headers['Pragma'] = 'no-cache'
+    # def callback(self, req: Request) -> Response:
+    #     res = make_response()
 
-    def _resolve_tenant_domain(self, resolve_method) -> str:
-        return resolve_method()
+    #     res.headers['Cache-Control'] = 'no-store'
+    #     res.headers['Pragma'] = 'no-cache'
 
-    def _get_default_domain(self, domain_attr: str) -> str:
-        return getattr(self.config, domain_attr, '') if self.config else ''
 
-    def _manage_login_state_cookies(self):
-        self.clear_oldest_login_state_cookie(self.req, self.res)
-        encrypted_login_state = self.encrypt_login_state(
-            self.login_state,
-            '7ffdbecc-ab7d-4134-9307-2dfcc52f7475'
-        )
-        self.create_login_state_cookie(
-            self.res,
-            self.login_state.state,
-            encrypted_login_state,
-            True
-        )
+    # --------- Login State Cookie Management --------- #
+    def _resolve_tenant_custom_domain_param(self, req: Request) -> str:
+        tenant_custom_domain = req.args.get('tenant_custom_domain')
+        if tenant_custom_domain and not isinstance(tenant_custom_domain, str):
+            raise TypeError('More than one [tenant_custom_domain] query parameter was encountered')
+        return tenant_custom_domain or ''
+    
+    def _resolve_tenant_domain_name(self, req: Request, root_domain: Optional[str]) -> str:
 
-    def resolve_tenant_from_domain(self) -> str:
-        tenant = self._parse_tenant_subdomain()
-        if tenant:
-            return tenant
+        def parse_tenant_subdomain(req: Request, root_domain: Optional[str]) -> Optional[str]:
+            host = req.host
+            if root_domain is None or not host.endswith(root_domain):
+                return None
 
-        tenant_domain = self.req.args.get('tenant_domain')
-        if isinstance(tenant_domain, list):
+            subdomain = host[:-len(root_domain)].rstrip('.')
+            if subdomain:
+                return subdomain
+
+            return None
+        
+        if self.use_tenant_subdomains:
+            return parse_tenant_subdomain(req, root_domain) or ''
+
+        tenant_domain_param = req.args.get('tenant_domain')
+        if tenant_domain_param and not isinstance(tenant_domain_param, str):
             raise TypeError('More than one [tenant_domain] query parameter was encountered')
-        return tenant_domain or ''
 
-    def resolve_tenant_from_custom_domain(self) -> str:
-        host = self._get_host_without_port()
-        return self.config.custom_state.get(host, '') if self.config and self.config.custom_state else ''
+        return tenant_domain_param or ''
 
-    def _get_host_without_port(self) -> str:
-        host = self.req.host
-        return host.split(':')[0] if ':' in host else host
+    def _create_login_state(self, req: Request, redirect_uri: str, custom_state: Optional[dict[str, str]]) -> LoginState:
 
-    def create_login_state(self, redirect_uri: str, config: Optional[LoginConfig] = None) -> LoginState:
-        return_url = self.req.args.get('return_url')
+        return_url = req.args.get('return_url')
         if isinstance(return_url, list):
             raise TypeError('More than one [return_url] query parameter was encountered')
 
@@ -123,32 +140,38 @@ class AuthService:
             code_verifier=self._generate_random_string(32),
             redirect_uri=redirect_uri,
             return_url=return_url if return_url else None,
-            custom_state=config.custom_state if config and config.custom_state else None
+            custom_state=custom_state
         )
+    
+    def _generate_random_string(self, length: int) -> str:
+        random_bytes = secrets.token_bytes(length)
+        random_string = base64.urlsafe_b64encode(random_bytes).decode('utf-8')
+        return random_string.rstrip('=')[:length]
 
-    def clear_oldest_login_state_cookie(self, req: Request, res: Response):
+    def _clear_oldest_login_state_cookie(self, req: Request, res: Response):
         if not req.cookies:
             return
 
-        login_cookie_names = [name for name in req.cookies if name.startswith(self.cookie_prefix)]
+        login_cookie_names = [name for name in req.cookies if name.startswith(self._cookie_prefix)]
         if len(login_cookie_names) >= 3:
-            timestamps = [name.split(self.login_state_cookie_separator)[2] for name in login_cookie_names]
+            timestamps = [name.split(self._login_state_cookie_separator)[2] for name in login_cookie_names]
             newest_timestamps = sorted(timestamps, reverse=True)[:2]
             for cookie_name in login_cookie_names:
-                timestamp = cookie_name.split(self.login_state_cookie_separator)[2]
+                timestamp = cookie_name.split(self._login_state_cookie_separator)[2]
                 if timestamp not in newest_timestamps:
                     res.delete_cookie(cookie_name)
 
-    def encrypt_login_state(self, login_state: LoginState, login_state_secret: str) -> bytes:
-        f = Fernet(login_state_secret.encode())  # Must be a 32-byte URL-safe key
+    def _encrypt_login_state(self, login_state: LoginState, login_state_secret: str) -> bytes:
+        key = base64.urlsafe_b64encode(login_state_secret.encode().ljust(32)[:32])
+        f = Fernet(key)  # Must be a 32-byte URL-safe key
         encrypted = f.encrypt(json.dumps(login_state.to_dict()).encode('utf-8'))
         if len(encrypted) > 4096:
             raise TypeError('Login state cookie exceeds 4kB in size.')
         return encrypted
-
-    def create_login_state_cookie(self, res: Response, state: str, encrypted_login_state: bytes, disable_secure: bool = False):
+    
+    def _create_login_state_cookie(self, res: Response, state: str, encrypted_login_state: bytes, disable_secure: bool = False):
         encrypted_str = encrypted_login_state.decode('utf-8')
-        cookie_name = f"{self.cookie_prefix}{state}{self.login_state_cookie_separator}{str(time.time())}"
+        cookie_name = f"{self._cookie_prefix}{state}{self._login_state_cookie_separator}{str(time.time())}"
         res.set_cookie(
             cookie_name,
             encrypted_str,
@@ -157,34 +180,26 @@ class AuthService:
             httponly=True
         )
 
-    def _parse_tenant_subdomain(self) -> str:
-        if not self.config or not self.config.default_tenant_domain:
-            return ''
-        host = self._get_host_without_port()
-        if host.endswith(self.config.default_tenant_domain):
-            return host[:-len(self.config.default_tenant_domain) - 1]
-        return ''
+    def _get_oauth_authorize_url(self, req: Request, login_state: LoginState, tenant_custom_domain: str, tenant_domain_name: str, default_tenant_custom_domain: Optional[str], default_tenant_domain_name: Optional[str]) -> str:
 
-    def _generate_random_string(self, length: int) -> str:
-        random_bytes = secrets.token_bytes(length)
-        random_string = base64.urlsafe_b64encode(random_bytes).decode('utf-8')
-        return random_string.rstrip('=')[:length]
+        def base64_url_encode(data: bytes) -> str:
+            b64 = base64.b64encode(data).decode()
+            return b64.replace('+', '-').replace('/', '_').replace('=', '')
+        
 
-    def get_oauth_authorize_url(self) -> str:
-        import hashlib
+        login_hint = req.args.get('login_hint')
 
-        login_hint = self.req.args.get('login_hint')
         if isinstance(login_hint, list):
             raise TypeError('More than one [login_hint] query parameter was encountered')
 
         query_params = {
-            'client_id': "6y53fp4tjreqje74seffvq4idy",
-            'redirect_uri': 'https://localhost:8080/api/auth/callback',
+            'client_id': self.client_id,
+            'redirect_uri': self.redirect_uri,
             'response_type': 'code',
-            'state': self.login_state.state,
-            'scope': 'openid offline_access profile email roles',
-            'code_challenge': self._base64_url_encode(
-                hashlib.sha256(self.login_state.code_verifier.encode()).digest()
+            'state': login_state.state,
+            'scope': ' '.join(self.scopes),
+            'code_challenge': base64_url_encode(
+                hashlib.sha256(login_state.code_verifier.encode()).digest()
             ),
             'code_challenge_method': 'S256',
             'nonce': self._generate_random_string(32)
@@ -192,19 +207,13 @@ class AuthService:
         if login_hint:
             query_params['login_hint'] = login_hint
 
-        separator = '.' if (self.config and self.config.tenant_custom_domain) else '-'
+        separator = '.' if self.use_custom_domains else '-'
 
-        if self.tenant_custom_domain:
-            return f"https://{self.tenant_custom_domain}/api/v1/oauth2/authorize?{urlencode(query_params)}"
-        elif self.tenant_domain_name:
-            vanity = os.environ.get('APPLICATION_VANITY_DOMAIN', 'example.com')
-            return f"https://{self.tenant_domain_name}{separator}{vanity}/api/v1/oauth2/authorize?{urlencode(query_params)}"
-        elif self.default_tenant_custom_domain:
-            return f"https://{self.default_tenant_custom_domain}/api/v1/oauth2/authorize?{urlencode(query_params)}"
+        if tenant_custom_domain:
+            return f"https://{tenant_custom_domain}/api/v1/oauth2/authorize?{urlencode(query_params)}"
+        elif tenant_domain_name:
+            return f"https://{tenant_domain_name}{separator}{self.wristband_application_domain}/api/v1/oauth2/authorize?{urlencode(query_params)}"
+        elif default_tenant_custom_domain:
+            return f"https://{default_tenant_custom_domain}/api/v1/oauth2/authorize?{urlencode(query_params)}"
         else:
-            vanity = os.environ.get('APPLICATION_VANITY_DOMAIN', 'example.com')
-            return f"https://{self.default_tenant_domain_name}{separator}{vanity}/api/v1/oauth2/authorize?{urlencode(query_params)}"
-
-    def _base64_url_encode(self, data: bytes) -> str:
-        b64 = base64.b64encode(data).decode()
-        return b64.replace('+', '-').replace('/', '_').replace('=', '')
+            return f"https://{default_tenant_domain_name}{separator}{self.wristband_application_domain}/api/v1/oauth2/authorize?{urlencode(query_params)}"

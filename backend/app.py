@@ -1,13 +1,66 @@
+import ast
+import os
 from flask import Flask
 
+from src.models.auth import AuthConfig
+from src.service.auth_service import AuthService
 from src.api.auth_route import auth_route
 
-app = Flask(__name__)
-app.register_blueprint(auth_route, url_prefix='/api/auth')
-    
-if __name__ == '__main__':
-    # For local dev on plain HTTP:
-    app.run(host='0.0.0.0', port=8080, debug=True)
 
-    # Or for local HTTPS (self-signed):
-    # app.run(host='0.0.0.0', port=8080, debug=True, ssl_context='adhoc')
+def create_app() -> Flask:
+
+    app = Flask(__name__)
+
+    # Required environment variables:
+    required_env_vars = [
+        "CLIENT_ID", 
+        "CLIENT_SECRET", 
+        "LOGIN_STATE_SECRET", 
+        "LOGIN_URL", 
+        "REDIRECT_URI"
+    ]
+
+    # Check if any required var is missing
+    missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+    if missing_vars:
+        raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+
+    # Safely parse SCOPES as a Python list (e.g. "['openid','offline_access','email']")
+    raw_scopes = os.getenv("SCOPES", "['openid', 'offline_access', 'email']")
+    try:
+        scopes_list = ast.literal_eval(raw_scopes)
+        if not isinstance(scopes_list, list):
+            raise ValueError
+    except Exception:
+        raise ValueError("SCOPES must be a valid Python list literal (e.g. \"['openid','email']\").")
+
+    # Convert string-based boolean environment variables
+    def to_bool(env_val: str) -> bool:
+        return env_val.strip().lower() in ["true", "1", "yes"]
+
+    auth_config = AuthConfig(
+        client_id=os.getenv("CLIENT_ID", ""),
+        client_secret=os.getenv("CLIENT_SECRET", ""),
+        login_state_secret=os.getenv("LOGIN_STATE_SECRET", ""),
+        login_url=os.getenv("LOGIN_URL", ""),
+        redirect_uri=os.getenv("REDIRECT_URI", ""),
+        wristband_application_domain=os.getenv("WRISTBAND_APPLICATION_DOMAIN", ""),
+        custom_application_login_page_url=os.getenv("CUSTOM_APPLICATION_LOGIN_PAGE_URL", ""),
+        dangerously_disable_secure_cookies=to_bool(os.getenv("DANGEROUSLY_DISABLE_SECURE_COOKIES", "False")),
+        root_domain=os.getenv("ROOT_DOMAIN", ""),
+        scopes=scopes_list,
+        use_custom_domains=to_bool(os.getenv("USE_CUSTOM_DOMAINS", "False")),
+        use_tenant_subdomains=to_bool(os.getenv("USE_TENANT_SUBDOMAINS", "False")),
+    )
+
+    auth_service = AuthService(auth_config)
+    app.config["auth_service"] = auth_service
+
+    app.register_blueprint(auth_route, url_prefix='/api/auth')
+
+    return app
+    
+
+if __name__ == '__main__':
+    app = create_app()
+    app.run(host='0.0.0.0', port=8080, debug=True)

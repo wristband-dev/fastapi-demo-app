@@ -5,10 +5,9 @@ from flask import json
 
 @dataclass
 class LoginConfig:
-    custom_state: Optional[dict[str, str]]
-    default_tenant_custom_domain: Optional[str]
-    default_tenant_domain: Optional[str]
-    tenant_custom_domain: Optional[bool]
+    custom_state: Optional[dict[str, str]] = None
+    default_tenant_custom_domain: Optional[str] = None
+    default_tenant_domain: Optional[str] = None
 
 
 @dataclass
