@@ -3,14 +3,15 @@ import os
 import secrets
 import time
 import json
-from typing import Optional
+from typing import Any, Optional, Union
 from urllib.parse import urlencode
 import hashlib
 from flask import Request, Response, make_response
 from cryptography.fernet import Fernet
 
-from src.models.auth import AuthConfig
-from src.models.login import LoginConfig, LoginState
+from src.sdk.wristband_service import WristbandService
+from src.sdk.enums import CallbackResultType
+from src.sdk.models import CallbackData, CallbackResult, LoginConfig, LoginState, AuthConfig
 
 
 class AuthService:
@@ -37,6 +38,12 @@ class AuthService:
         self.use_custom_domains = auth_config.use_custom_domains
         self.use_tenant_subdomains = auth_config.use_tenant_subdomains
         # TODO - validation on auth config fields
+
+        self.wristband_service = WristbandService(
+            wristband_application_domain=self.wristband_application_domain,
+            client_id=self.client_id,
+            client_secret=self.client_secret
+        )
 
 
     def login(
@@ -93,12 +100,142 @@ class AuthService:
         res.headers['Location'] = authorize_url
         return res
 
-    # def callback(self, req: Request) -> Response:
-    #     res = make_response()
+    def callback(self, req: Request) -> CallbackResult:
+        """
+        """
+        # 1) Extract Query Params from wristband callback
+        code = req.args.get('code')
+        param_state = req.args.get('state')
+        error = req.args.get('error')
+        error_description = req.args.get('error_description')
+        tenant_custom_domain_param = req.args.get('tenant_custom_domain')
 
-    #     res.headers['Cache-Control'] = 'no-store'
-    #     res.headers['Pragma'] = 'no-cache'
+        # 2) Validate basic query params
+        if not param_state or not isinstance(param_state, str):
+            raise TypeError('Invalid or missing query parameter [state].')
 
+        if code and not isinstance(code, str):
+            raise TypeError('Invalid query parameter [code].')
+
+        if error and not isinstance(error, str):
+            raise TypeError('Invalid query parameter [error].')
+
+        if error_description and not isinstance(error_description, str):
+            raise TypeError('Invalid query parameter [error_description].')
+
+        if tenant_custom_domain_param and not isinstance(tenant_custom_domain_param, str):
+            raise TypeError('Invalid query parameter [tenant_custom_domain].')
+
+        # 3) Resolve tenant domain name
+        resolved_tenant_domain_name: str = self._resolve_tenant_domain_name(req, self.root_domain)
+        if not resolved_tenant_domain_name:
+            # useTenantSubdomains is a design choice; adapt as needed
+            if self.use_tenant_subdomains:
+                raise ValueError(
+                    'missing_tenant_subdomain: Callback request URL is missing a tenant subdomain'
+                )
+            else:
+                raise ValueError(
+                    'missing_tenant_domain: Callback request is missing the [tenant_domain] param'
+                )
+
+        # 4) Build the tenant login URL in case we need to redirect
+        #    (mimics the logic from your TypeScript code)
+        if self.use_tenant_subdomains:
+            tenant_login_url = self.login_url.replace("{tenant_domain}", resolved_tenant_domain_name)
+        else:
+            # fallback, append ?tenant_domain=...
+            tenant_login_url = f"{self.login_url}?tenant_domain={resolved_tenant_domain_name}"
+
+        # If the tenant_custom_domain is set, add that param
+        if tenant_custom_domain_param:
+            # If we already used ? above, use & now, etc.
+            connector = '&' if '?' in tenant_login_url else '?'
+            tenant_login_url = f"{tenant_login_url}{connector}tenant_custom_domain={tenant_custom_domain_param}"
+
+        # Create a login redirect response for bad cases
+        login_redirect_res = make_response()
+        login_redirect_res.headers['Cache-Control'] = 'no-store'
+        login_redirect_res.headers['Pragma'] = 'no-cache'
+        login_redirect_res.status_code = 302
+        login_redirect_res.headers['Location'] = tenant_login_url
+
+        # 5) Retrieve and decrypt the login state cookie
+        login_state_cookie_name, login_state_cookie_val = self._get_login_state_cookie(req)
+
+        if not login_state_cookie_val:
+            # No valid cookie => We cannot verify the request => redirect to login
+            return CallbackResult(
+                result=CallbackResultType.REDIRECT_REQUIRED,
+                callback_data=None,
+                redirect_response=login_redirect_res
+            )
+
+        try:
+            login_state: LoginState = self._decrypt_login_state(login_state_cookie_val, self.login_state_secret)
+        except Exception as e:
+            # If decryption fails, redirect to login
+            return CallbackResult(
+                result=CallbackResultType.REDIRECT_REQUIRED,
+                callback_data=None,
+                redirect_response=login_redirect_res
+            )
+        
+        # 6) Validate the state from the cookie matches the incoming state param
+        if param_state != login_state.state:
+            # Mismatch => redirect
+            return CallbackResult(
+                result=CallbackResultType.REDIRECT_REQUIRED,
+                callback_data=None,
+                redirect_response=login_redirect_res
+            )
+
+        # 7) Check for any OAuth errors
+        if error:
+            # If we specifically got a 'login_required' error, go back to the login
+            if error.lower() == 'login_required':
+                return CallbackResult(
+                    result=CallbackResultType.REDIRECT_REQUIRED,
+                    callback_data=None,
+                    redirect_response=login_redirect_res
+                )
+            # Otherwise raise an exception
+            raise ValueError(f"OAuth error: {error}. Description: {error_description}")
+
+        # 8) If no code, this is an error
+        if not code:
+            raise TypeError('Missing required query parameter [code].')
+
+        # 9) Exchange the authorization code for tokens
+        #    Here you would call your Wristband token endpoint. Example:
+
+
+        token_response = self.wristband_service.get_tokens(
+            code=code,
+            redirect_uri=login_state.redirect_uri,
+            code_verifier=login_state.code_verifier
+        )
+
+        # 10) Fetch userinfo (again, depends on your own implementation)
+        userinfo: dict[str, Any] = self.wristband_service.get_userinfo(token_response.access_token)
+
+        callback_data: CallbackData = CallbackData(
+            access_token=token_response.access_token,
+            id_token=token_response.id_token,
+            expires_in=token_response.expires_in,
+            tenant_domain_name=resolved_tenant_domain_name,
+            user_info=userinfo,
+            custom_state=login_state.custom_state,
+            refresh_token=token_response.refresh_token,
+            return_url=login_state.return_url,
+            tenant_custom_domain=tenant_custom_domain_param
+        )
+
+        return CallbackResult(
+            result=CallbackResultType.COMPLETED,
+            callback_data=callback_data,
+            redirect_response=None
+        )
 
     # --------- Login State Cookie Management --------- #
     def _resolve_tenant_custom_domain_param(self, req: Request) -> str:
@@ -217,3 +354,26 @@ class AuthService:
             return f"https://{default_tenant_custom_domain}/api/v1/oauth2/authorize?{urlencode(query_params)}"
         else:
             return f"https://{default_tenant_domain_name}{separator}{self.wristband_application_domain}/api/v1/oauth2/authorize?{urlencode(query_params)}"
+        
+    def _get_login_state_cookie(self, req: Request) -> tuple:
+        cookies = req.cookies
+        state = req.args.get('state')
+        param_state = state if state else ''
+
+        matching_login_cookie_names = [
+            cookie_name for cookie_name in cookies
+            if cookie_name.startswith(f"{self._cookie_prefix}{param_state}{self._login_state_cookie_separator}")
+        ]
+
+        if matching_login_cookie_names:
+            cookie_name = matching_login_cookie_names[0]
+            return cookie_name, cookies[cookie_name]
+
+        return None, None
+    
+    def _decrypt_login_state(self, login_state_cookie: str, login_state_secret: str) -> LoginState:
+        key = base64.urlsafe_b64encode(login_state_secret.encode().ljust(32)[:32])
+        f = Fernet(key)
+        decrypted = f.decrypt(login_state_cookie.encode('utf-8'))
+        login_state_dict = json.loads(decrypted.decode('utf-8'))
+        return LoginState(**login_state_dict)

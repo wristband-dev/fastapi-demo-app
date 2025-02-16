@@ -2,7 +2,7 @@ import ast
 import os
 from flask import Flask
 
-from src.models.auth import AuthConfig
+from src.sdk.models import AuthConfig
 from src.service.auth_service import AuthService
 from src.api.auth_route import auth_route
 
