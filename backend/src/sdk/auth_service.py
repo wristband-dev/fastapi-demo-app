@@ -8,6 +8,9 @@ from urllib.parse import urlencode
 import hashlib
 from flask import Request, Response, make_response
 from cryptography.fernet import Fernet
+import logging
+
+logger = logging.getLogger(__name__)
 
 from src.sdk.wristband_service import WristbandService
 from src.sdk.enums import CallbackResultType
@@ -19,7 +22,7 @@ class AuthService:
     static values shared by all instances of classes
     """
     _cookie_prefix = 'login#'
-    _login_state_cookie_separator = '-'
+    _login_state_cookie_separator = '#'
 
     def __init__(self, auth_config: AuthConfig):
         """
@@ -92,6 +95,8 @@ class AuthService:
         encrypted_login_state: bytes = self._encrypt_login_state(login_state, self.login_state_secret)
         self._create_login_state_cookie(res, login_state.state, encrypted_login_state, self.dangerously_disable_secure_cookies)
 
+        logging.info(f'Login state cookie created: {res.headers.get("Set-Cookie")}')
+
         # Create the Wristband Authorize Endpoint URL which the user will get redirectd to.
         authorize_url: str = self._get_oauth_authorize_url(req, login_state, tenant_custom_domain, tenant_domain_name, default_tenant_custom_domain, default_tenant_domain_name)
 
@@ -103,8 +108,10 @@ class AuthService:
     def callback(self, req: Request) -> CallbackResult:
         """
         """
+        logger.info('Callback started')
         # 1) Extract Query Params from wristband callback
         code = req.args.get('code')
+        logging.info(f'Code: {code}')
         param_state = req.args.get('state')
         error = req.args.get('error')
         error_description = req.args.get('error_description')
@@ -165,8 +172,9 @@ class AuthService:
 
         if not login_state_cookie_val:
             # No valid cookie => We cannot verify the request => redirect to login
+            logger.info('No valid cookie => We cannot verify the request => redirect to login')
             return CallbackResult(
-                result=CallbackResultType.REDIRECT_REQUIRED,
+                type=CallbackResultType.REDIRECT_REQUIRED,
                 callback_data=None,
                 redirect_response=login_redirect_res
             )
@@ -175,8 +183,9 @@ class AuthService:
             login_state: LoginState = self._decrypt_login_state(login_state_cookie_val, self.login_state_secret)
         except Exception as e:
             # If decryption fails, redirect to login
+            logger.info('Decryption failed => redirect to login')
             return CallbackResult(
-                result=CallbackResultType.REDIRECT_REQUIRED,
+                type=CallbackResultType.REDIRECT_REQUIRED,
                 callback_data=None,
                 redirect_response=login_redirect_res
             )
@@ -184,8 +193,9 @@ class AuthService:
         # 6) Validate the state from the cookie matches the incoming state param
         if param_state != login_state.state:
             # Mismatch => redirect
+            logger.info('State mismatch => redirect to login')
             return CallbackResult(
-                result=CallbackResultType.REDIRECT_REQUIRED,
+                type=CallbackResultType.REDIRECT_REQUIRED,
                 callback_data=None,
                 redirect_response=login_redirect_res
             )
@@ -193,9 +203,10 @@ class AuthService:
         # 7) Check for any OAuth errors
         if error:
             # If we specifically got a 'login_required' error, go back to the login
+            logger.info(f'OAuth error: {error}. Description: {error_description}')
             if error.lower() == 'login_required':
                 return CallbackResult(
-                    result=CallbackResultType.REDIRECT_REQUIRED,
+                    type=CallbackResultType.REDIRECT_REQUIRED,
                     callback_data=None,
                     redirect_response=login_redirect_res
                 )
@@ -231,8 +242,9 @@ class AuthService:
             tenant_custom_domain=tenant_custom_domain_param
         )
 
+        logger.info('Callback completed')
         return CallbackResult(
-            result=CallbackResultType.COMPLETED,
+            type=CallbackResultType.COMPLETED,
             callback_data=callback_data,
             redirect_response=None
         )
@@ -308,10 +320,13 @@ class AuthService:
     
     def _create_login_state_cookie(self, res: Response, state: str, encrypted_login_state: bytes, disable_secure: bool = False):
         encrypted_str = encrypted_login_state.decode('utf-8')
-        cookie_name = f"{self._cookie_prefix}{state}{self._login_state_cookie_separator}{str(time.time())}"
+        cookie_name = f"{self._cookie_prefix}{state}{self._login_state_cookie_separator}{str(int(1000 * time.time()))}"
+        
+        logging.info(f'Creating login state cookie: {cookie_name}')
+
         res.set_cookie(
-            cookie_name,
-            encrypted_str,
+            key=cookie_name,
+            value=encrypted_str,
             max_age=3600,
             secure=not disable_secure,
             httponly=True
@@ -359,6 +374,13 @@ class AuthService:
         cookies = req.cookies
         state = req.args.get('state')
         param_state = state if state else ''
+
+        logging.info(f'Getting login cookie - param_state: {param_state}')
+        logging.info(f'Cookies: {cookies}')
+
+        for cookie_name in cookies:
+            logging.info(f'Cookie name: {cookie_name}')
+            logging.info(f'Cookie value: {cookies[cookie_name]}')
 
         matching_login_cookie_names = [
             cookie_name for cookie_name in cookies

@@ -1,4 +1,5 @@
 from dataclasses import dataclass, asdict, field
+import logging
 from typing import Any, Optional, List
 
 from flask import Response
@@ -51,14 +52,11 @@ class CallbackData:
     refresh_token: Optional[str]
     return_url: Optional[str]
     tenant_custom_domain: Optional[str]
-    
-
-
 
 @dataclass
 class CallbackResult:
     callback_data: Optional[CallbackData]
-    result: CallbackResultType
+    type: CallbackResultType
     redirect_response: Optional[Response]
 
 @dataclass
@@ -72,6 +70,7 @@ class TokenResponse:
 
     @staticmethod
     def from_api_response(response: dict[str, Any]) -> 'TokenResponse':
+        logging.info(f'Token response: {response}')
         return TokenResponse(
             access_token=response['access_token'],
             token_type=response['token_type'],

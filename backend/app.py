@@ -1,15 +1,28 @@
 import ast
+import logging
 import os
 from flask import Flask
 
 from src.sdk.models import AuthConfig
-from src.service.auth_service import AuthService
+from src.sdk.auth_service import AuthService
 from src.api.auth_route import auth_route
 
 
 def create_app() -> Flask:
 
     app = Flask(__name__)
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
+
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("[%(asctime)s] %(levelname)s in %(name)s: %(message)s")
+    console_handler.setFormatter(formatter)
+
+    if not root_logger.handlers:
+        root_logger.addHandler(console_handler)
+
 
     # Required environment variables:
     required_env_vars = [
