@@ -108,10 +108,8 @@ class AuthService:
     def callback(self, req: Request) -> CallbackResult:
         """
         """
-        logger.info('Callback started')
         # 1) Extract Query Params from wristband callback
         code = req.args.get('code')
-        logging.info(f'Code: {code}')
         param_state = req.args.get('state')
         error = req.args.get('error')
         error_description = req.args.get('error_description')
@@ -147,7 +145,6 @@ class AuthService:
                 )
 
         # 4) Build the tenant login URL in case we need to redirect
-        #    (mimics the logic from your TypeScript code)
         if self.use_tenant_subdomains:
             tenant_login_url = self.login_url.replace("{tenant_domain}", resolved_tenant_domain_name)
         else:
@@ -172,7 +169,6 @@ class AuthService:
 
         if not login_state_cookie_val:
             # No valid cookie => We cannot verify the request => redirect to login
-            logger.info('No valid cookie => We cannot verify the request => redirect to login')
             return CallbackResult(
                 type=CallbackResultType.REDIRECT_REQUIRED,
                 callback_data=None,
@@ -183,7 +179,6 @@ class AuthService:
             login_state: LoginState = self._decrypt_login_state(login_state_cookie_val, self.login_state_secret)
         except Exception as e:
             # If decryption fails, redirect to login
-            logger.info('Decryption failed => redirect to login')
             return CallbackResult(
                 type=CallbackResultType.REDIRECT_REQUIRED,
                 callback_data=None,
@@ -193,7 +188,6 @@ class AuthService:
         # 6) Validate the state from the cookie matches the incoming state param
         if param_state != login_state.state:
             # Mismatch => redirect
-            logger.info('State mismatch => redirect to login')
             return CallbackResult(
                 type=CallbackResultType.REDIRECT_REQUIRED,
                 callback_data=None,
@@ -203,7 +197,6 @@ class AuthService:
         # 7) Check for any OAuth errors
         if error:
             # If we specifically got a 'login_required' error, go back to the login
-            logger.info(f'OAuth error: {error}. Description: {error_description}')
             if error.lower() == 'login_required':
                 return CallbackResult(
                     type=CallbackResultType.REDIRECT_REQUIRED,
@@ -219,8 +212,6 @@ class AuthService:
 
         # 9) Exchange the authorization code for tokens
         #    Here you would call your Wristband token endpoint. Example:
-
-
         token_response = self.wristband_service.get_tokens(
             code=code,
             redirect_uri=login_state.redirect_uri,
@@ -242,7 +233,6 @@ class AuthService:
             tenant_custom_domain=tenant_custom_domain_param
         )
 
-        logger.info('Callback completed')
         return CallbackResult(
             type=CallbackResultType.COMPLETED,
             callback_data=callback_data,
@@ -286,11 +276,33 @@ class AuthService:
 
         return LoginState(
             state=self._generate_random_string(32),
-            code_verifier=self._generate_random_string(32),
+            code_verifier=self._generate_random_string(64),
             redirect_uri=redirect_uri,
             return_url=return_url if return_url else None,
             custom_state=custom_state
         )
+    
+    def _clear_login_state_cookie(self, res: Response, cookie_name: str, dangerously_disable_secure_cookies: bool):
+        cookie_attributes = [
+            f"{cookie_name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+            '' if dangerously_disable_secure_cookies else 'Secure'
+        ]
+        res.headers.add('Set-Cookie', '; '.join(cookie_attributes))
+
+    def create_callback_response(self, req: Request, redirect_url: str) -> Response:
+        if not redirect_url:
+            raise TypeError('redirect_url cannot be null or empty')
+
+        redirect_response = make_response('', 302)
+        redirect_response.headers['Location'] = redirect_url
+        redirect_response.headers['Cache-Control'] = 'no-store'
+        redirect_response.headers['Pragma'] = 'no-cache'
+
+        login_state_cookie_name, _ = self._get_login_state_cookie(req)
+        if login_state_cookie_name:
+            self._clear_login_state_cookie(redirect_response, login_state_cookie_name, self.dangerously_disable_secure_cookies)
+
+        return redirect_response
     
     def _generate_random_string(self, length: int) -> str:
         random_bytes = secrets.token_bytes(length)
@@ -323,7 +335,7 @@ class AuthService:
         cookie_name = f"{self._cookie_prefix}{state}{self._login_state_cookie_separator}{str(int(1000 * time.time()))}"
         
         logging.info(f'Creating login state cookie: {cookie_name}')
-
+        logging.info(f'Secure ? : {not disable_secure}')
         res.set_cookie(
             key=cookie_name,
             value=encrypted_str,
@@ -374,13 +386,6 @@ class AuthService:
         cookies = req.cookies
         state = req.args.get('state')
         param_state = state if state else ''
-
-        logging.info(f'Getting login cookie - param_state: {param_state}')
-        logging.info(f'Cookies: {cookies}')
-
-        for cookie_name in cookies:
-            logging.info(f'Cookie name: {cookie_name}')
-            logging.info(f'Cookie value: {cookies[cookie_name]}')
 
         matching_login_cookie_names = [
             cookie_name for cookie_name in cookies

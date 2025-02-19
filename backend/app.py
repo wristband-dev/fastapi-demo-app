@@ -30,7 +30,8 @@ def create_app() -> Flask:
         "CLIENT_SECRET", 
         "LOGIN_STATE_SECRET", 
         "LOGIN_URL", 
-        "REDIRECT_URI"
+        "REDIRECT_URI",
+        "APP_HOME_URL",
     ]
 
     # Check if any required var is missing
