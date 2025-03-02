@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Geist, Geist_Mono } from "next/font/google";
+import { useState } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,6 +13,27 @@ const geistMono = Geist_Mono({
 });
 
 export default function Home() {
+  const [response, setResponse] = useState<string | null>(null);
+
+  const handleTestDecryptCookie = async () => {
+    try {
+      const res = await fetch("/api/auth/test_decrypt_cookie", {
+        method: "GET",
+        credentials: "include", // Include cookies in the request
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch");
+      }
+
+      const data = await res.text();
+      setResponse(data);
+    } catch (error) {
+      console.error("Error:", error);
+      setResponse("Error fetching data");
+    }
+  };
+
   return (
     <div
       className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
@@ -61,6 +83,13 @@ export default function Home() {
             Read our docs
           </a>
         </div>
+        <button
+          onClick={handleTestDecryptCookie}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Test Decrypt Cookie
+        </button>
+        {response && <p className="mt-2 text-sm">{response}</p>}
       </main>
       <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
         <a

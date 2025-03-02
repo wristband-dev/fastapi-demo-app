@@ -53,6 +53,9 @@ class CallbackData:
     return_url: Optional[str]
     tenant_custom_domain: Optional[str]
 
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
 @dataclass
 class CallbackResult:
     callback_data: Optional[CallbackData]
