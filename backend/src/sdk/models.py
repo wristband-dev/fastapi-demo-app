@@ -1,4 +1,5 @@
 from dataclasses import dataclass, asdict, field
+from datetime import datetime, timedelta
 import logging
 from typing import Any, Optional, List
 
@@ -55,6 +56,17 @@ class CallbackData:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+    
+    def to_session(self) -> dict[str, Any]:
+        return {
+            "is_authenticated": True,
+            "access_token": self.access_token,
+            "expires_at": int((datetime.now() + timedelta(seconds=self.expires_in)).timestamp() * 1000),
+            "tenant_domain_name": self.tenant_domain_name,
+            "tenant_custom_domain": self.tenant_custom_domain,
+            "user_info": self.user_info,
+            "refresh_token": self.refresh_token,
+        }
 
 @dataclass
 class CallbackResult:

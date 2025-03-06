@@ -2,6 +2,10 @@ import ast
 import logging
 import os
 from flask import Flask
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 from src.sdk.models import AuthConfig
 from src.sdk.auth_service import AuthService
@@ -34,11 +38,11 @@ def create_app() -> Flask:
         "APP_HOME_URL",
         "SESSION_COOKIE_SECRET"
     ]
-
+    
     # Check if any required var is missing
     missing_vars: list[str] = [var for var in required_env_vars if not os.getenv(var)]
     if missing_vars:
-        raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+        raise ValueError(f"Missing required environment variables: {missing_vars}")
 
     # Safely parse SCOPES as a Python list (e.g. "['openid','offline_access','email']")
     raw_scopes: str = os.getenv("SCOPES", "['openid', 'offline_access', 'email']")

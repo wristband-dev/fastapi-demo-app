@@ -38,13 +38,10 @@ def callback() -> Response | Any:
         raise ValueError("Missing callback data")
 
     secure: bool = not to_bool(os.getenv("DANGEROUSLY_DISABLE_SECURE_COOKIES", "False"))
-    
-    temp = {"access_token": callback_result.callback_data.access_token}
 
     resp.set_cookie(
         key="session",
-        # value=CookieEncryptor(session_secret_cookie).encrypt(callback_result.callback_data.to_dict()),
-        value=CookieEncryptor(session_secret_cookie).encrypt(temp),
+        value=CookieEncryptor(session_secret_cookie).encrypt(callback_result.callback_data.to_session()),
         secure=secure,
         httponly=True,
         samesite="lax"
