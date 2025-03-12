@@ -250,7 +250,6 @@ class AuthService:
         """
         refresh_token: Optional[str] = config.refresh_token if config else None
         if refresh_token:
-            logging.info(f'Revoking refresh token: {refresh_token}')
             try:
                 self._revoke_refresh_token(refresh_token)
             except Exception as e:
