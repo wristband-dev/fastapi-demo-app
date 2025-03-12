@@ -14,6 +14,14 @@ class LoginConfig:
     default_tenant_custom_domain: Optional[str] = None
     default_tenant_domain: Optional[str] = None
 
+
+@dataclass
+class LogoutConfig:
+    redirect_uri: Optional[str] = None
+    refresh_token: Optional[str] = None
+    tenant_custom_domain: Optional[str] = None
+    tenant_domain_name: Optional[str] = None
+
 @dataclass
 class LoginState:
     state: str
@@ -40,6 +48,8 @@ class AuthConfig:
     scopes: List[str] = field(default_factory=lambda: ['openid', 'offline_access', 'email'])
     use_custom_domains: bool = False
     use_tenant_subdomains: bool = False
+
+    # TODO - add validation on auth config fields
 
 @dataclass
 class CallbackData:
@@ -85,7 +95,6 @@ class TokenResponse:
 
     @staticmethod
     def from_api_response(response: dict[str, Any]) -> 'TokenResponse':
-        logging.info(f'Token response: {response}')
         return TokenResponse(
             access_token=response['access_token'],
             token_type=response['token_type'],

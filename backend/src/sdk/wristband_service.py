@@ -7,35 +7,46 @@ from src.sdk.models import TokenResponse
 
 class WristbandService:
     def __init__(self, wristband_application_domain: str, client_id: str, client_secret: str) -> None:
-        credentials = f"{client_id}:{client_secret}"
-        encoded_credentials = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
+        credentials: str = f"{client_id}:{client_secret}"
+        encoded_credentials: str = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
         
-        self.base_url = f'https://{wristband_application_domain}/api/v1'
-        self.headers = { 
+        self.base_url: str = f'https://{wristband_application_domain}/api/v1'
+        self.headers: dict[str, str] = { 
             'Authorization': f'Basic {encoded_credentials}',
             'Content-Type': 'application/x-www-form-urlencoded'
         }
 
     def get_tokens(self, code: str, redirect_uri: str, code_verifier: str) -> TokenResponse:
-        form_data = {
+        form_data: dict[str, str] = {
             'grant_type': 'authorization_code',
             'code': code,
             'redirect_uri': redirect_uri,
             'code_verifier': code_verifier,
         }
 
-        response = requests.post(
+        response: requests.Response = requests.post(
             self.base_url + '/oauth2/token', 
             data=form_data,
             headers=self.headers
         )
 
         return TokenResponse.from_api_response(response.json())
+    
+    def revoke_refresh_token(self, refresh_token: str) -> None:
+        form_data: dict[str, str] = {
+            'token': refresh_token
+        }
+
+        requests.post(
+            self.base_url + '/oauth2/revoke',
+            data=form_data,
+            headers=self.headers
+        )
 
 
     def get_userinfo(self, access_token: str) -> dict[str, Any]:
 
-        response = requests.get(
+        response: requests.Response = requests.get(
             self.base_url + '/oauth2/userinfo',
             headers={ 'Authorization': f'Bearer {access_token}' }
         )

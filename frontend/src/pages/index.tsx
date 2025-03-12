@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Geist, Geist_Mono } from "next/font/google";
 import { useState } from "react";
+import { useRouter } from "next/router";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,6 +15,8 @@ const geistMono = Geist_Mono({
 
 export default function Home() {
   const [response, setResponse] = useState<string | null>(null);
+  const [logoutMessage, setLogoutMessage] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleTestDecryptCookie = async () => {
     try {
@@ -31,6 +34,13 @@ export default function Home() {
     } catch (error) {
       console.error("Error:", error);
       setResponse("Error fetching data");
+    }
+  };
+
+  const handleLogout = (logoutUrl: string) => {
+      if (!!window) {
+        console.log("window", window);
+        window.location.href = '/api/auth/logout';
     }
   };
 
@@ -83,13 +93,23 @@ export default function Home() {
             Read our docs
           </a>
         </div>
-        <button
-          onClick={handleTestDecryptCookie}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Test Decrypt Cookie
-        </button>
-        {response && <p className="mt-2 text-sm">{response}</p>}
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={handleTestDecryptCookie}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Test Decrypt Cookie
+          </button>
+          {response && <p className="mt-2 text-sm">{response}</p>}
+        </div>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Logout
+          </button>
+        </div>
       </main>
       <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
         <a

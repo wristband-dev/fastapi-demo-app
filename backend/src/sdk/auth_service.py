@@ -15,7 +15,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 from src.sdk.wristband_service import WristbandService
 from src.sdk.enums import CallbackResultType
-from src.sdk.models import CallbackData, CallbackResult, LoginConfig, LoginState, AuthConfig
+from src.sdk.models import CallbackData, CallbackResult, LoginConfig, LoginState, AuthConfig, LogoutConfig
 
 
 class AuthService:
@@ -48,7 +48,6 @@ class AuthService:
             client_id=self.client_id,
             client_secret=self.client_secret
         )
-
 
     def login(
         self,
@@ -95,8 +94,6 @@ class AuthService:
         self._clear_oldest_login_state_cookie(req, res)
         encrypted_login_state: bytes = self._encrypt_login_state(login_state, self.login_state_secret)
         self._create_login_state_cookie(res, login_state.state, encrypted_login_state, self.dangerously_disable_secure_cookies)
-
-        logging.info(f'Login state cookie created: {res.headers.get("Set-Cookie")}')
 
         # Create the Wristband Authorize Endpoint URL which the user will get redirectd to.
         authorize_url: str = self._get_oauth_authorize_url(req, login_state, tenant_custom_domain, tenant_domain_name, default_tenant_custom_domain, default_tenant_domain_name)
@@ -235,6 +232,73 @@ class AuthService:
             redirect_response=None
         )
 
+    def logout(
+        self, 
+        req: Request, 
+        config: Optional[LogoutConfig] = None
+    ) -> Response:
+        # make response to return to client
+        res: Response = make_response()
+        
+        res.headers['Cache-Control'] = 'no-store'
+        res.headers['Pragma'] = 'no-cache'
+
+        # Revoke refresh token if present
+        """
+        The developer could opt to not pass in the refresh token
+            - in that case don't revoke, and the refresh token will remain valid (not ideal)
+        """
+        refresh_token: Optional[str] = config.refresh_token if config else None
+        if refresh_token:
+            logging.info(f'Revoking refresh token: {refresh_token}')
+            try:
+                self._revoke_refresh_token(refresh_token)
+            except Exception as e:
+                logger.debug(f'Revoking the refresh token failed during logout: {e}')
+
+        # Build query parameters
+        query_params: dict[str, str] = {
+            'client_id': self.client_id,
+        }
+        if config and config.redirect_uri:
+            query_params['redirect_uri'] = config.redirect_uri
+
+        query_string: str = urlencode({k: v for k, v in query_params.items() if v})
+
+        # Get host and determine tenant domain
+        host: str = req.host
+        tenant_custom_domain: Optional[str] = config.tenant_custom_domain if config else None
+        tenant_domain_name: Optional[str] = config.tenant_domain_name if config else None
+        redirect_url: Optional[str] = config.redirect_uri if config else None
+
+        # Construct app login URL
+        app_login_url: str = self.custom_application_login_page_url or f'https://{self.wristband_application_domain}/login'
+
+        # Handle cases where we should redirect to app login
+        if not tenant_custom_domain:
+            host_root_domain: str = host.split('.')[-1]
+            if self.use_tenant_subdomains and not host_root_domain == self.root_domain:
+                res.status_code = 302
+                res.headers['Location'] = redirect_url or f'{app_login_url}?client_id={self.client_id}'
+                return res
+            if not self.use_tenant_subdomains and not tenant_domain_name:
+                res.status_code = 302
+                res.headers['Location'] = redirect_url or f'{app_login_url}?client_id={self.client_id}'
+                return res
+
+        # Determine tenant domain to use
+        if self.use_tenant_subdomains:
+            tenant_domain_name = host.split('.')[0]
+        
+        separator: Literal['.'] | Literal['-'] = '.' if self.use_custom_domains else '-'
+        tenant_domain_to_use: str = tenant_custom_domain or f'{tenant_domain_name}{separator}{self.wristband_application_domain}'
+
+        # Perform logout redirect
+        res.status_code = 302
+        res.headers['Location'] = f'https://{tenant_domain_to_use}/api/v1/logout?{query_string}'
+
+        return res
+
     # --------- Login State Cookie Management --------- #
     def _resolve_tenant_custom_domain_param(self, req: Request) -> str:
         tenant_custom_domain = req.args.get('tenant_custom_domain')
@@ -330,7 +394,6 @@ class AuthService:
         encrypted_str: str = encrypted_login_state.decode('utf-8')
         cookie_name: str = f"{self._cookie_prefix}{state}{self._login_state_cookie_separator}{str(int(1000 * time.time()))}"
         
-        logging.info(f'Creating login state cookie: {cookie_name}')
         logging.info(f'Secure ? : {not disable_secure}')
         res.set_cookie(
             key=cookie_name,
@@ -401,3 +464,7 @@ class AuthService:
         decrypted = f.decrypt(login_state_cookie.encode('utf-8'))
         login_state_dict = json.loads(decrypted.decode('utf-8'))
         return LoginState(**login_state_dict)
+    
+    def _revoke_refresh_token(self, refresh_token: str) -> None:
+        self.wristband_service.revoke_refresh_token(refresh_token)
+

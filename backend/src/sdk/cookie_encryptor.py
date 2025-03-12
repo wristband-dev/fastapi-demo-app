@@ -23,16 +23,16 @@ class CookieEncryptor:
                 
         self.cipher = Fernet(self.secret_key)
     
-    def encrypt(self, data):
+    def encrypt(self, data) -> str:
         """Encrypt data (dict) to a string suitable for cookies"""
         if not isinstance(data, dict):
             raise TypeError("Data must be a dictionary")
             
-        json_data = json.dumps(data).encode()
-        encrypted = self.cipher.encrypt(json_data)
+        json_data: bytes = json.dumps(data).encode()
+        encrypted: bytes = self.cipher.encrypt(json_data)
         return base64.b64encode(encrypted).decode()
     
-    def decrypt(self, encrypted_str):
+    def decrypt(self, encrypted_str: str) -> dict:
         """Decrypt a cookie string back to a dictionary"""
         if not encrypted_str:
             return {}

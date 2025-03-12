@@ -1,10 +1,11 @@
 import os
 from typing import Any, Optional
 from flask import Blueprint, Response, request, current_app
+from requests import Session
 
 from src.sdk.utils import to_bool
 from src.sdk.enums import CallbackResultType
-from src.sdk.models import CallbackResult
+from src.sdk.models import CallbackResult, LogoutConfig
 from src.sdk.auth_service import AuthService
 from src.sdk.cookie_encryptor import CookieEncryptor
 
@@ -47,11 +48,52 @@ def callback() -> Response | Any:
         samesite="lax"
     )
 
-    for header, value in resp.headers:
-        if header == 'Set-Cookie':
-            print(f"Cookie: {value}")
+    return resp
+
+@auth_route.route('/logout', methods=['GET', 'POST'])
+def logout() -> Response | Any:
+
+    # Get environment variables
+    session_secret_cookie: Optional[str] = os.getenv("SESSION_COOKIE_SECRET")
+    if session_secret_cookie is None:
+        raise ValueError("Missing required environment variable: SESSION_COOKIE_SECRET")
+    
+    secure: bool = not to_bool(os.getenv("DANGEROUSLY_DISABLE_SECURE_COOKIES", "False"))
+
+    # Get the auth service from the current app
+    service: AuthService = current_app.config["auth_service"]
+
+    # Get the session from the request
+    session: Optional[str] = request.cookies.get("session")
+    if session is None:
+        return "No session found", 400
+
+    # Decrypt the session
+    session_data: dict[str, Any] = CookieEncryptor(session_secret_cookie).decrypt(session)
+
+    # Logout the user
+    resp: Response = service.logout(
+        req=request,
+        config=LogoutConfig(
+            refresh_token=session_data.get("refresh_token"),
+            redirect_uri=os.getenv("REDIRECT_URI", ""), # up to developer to set
+            tenant_custom_domain=session_data.get("tenant_custom_domain"),
+            tenant_domain_name=session_data.get("tenant_domain_name")
+        )
+    )
+
+    # Delete the session cookie
+    resp.set_cookie(
+        key="session",
+        value='',
+        secure=secure,
+        httponly=True,
+        samesite="lax",
+        max_age=0
+    )
 
     return resp
+
 
 @auth_route.route('/test_decrypt_cookie', methods=['GET', 'POST'])
 def test_decrypt_cookie() -> Response | Any:
@@ -68,8 +110,3 @@ def test_decrypt_cookie() -> Response | Any:
     
     return decrypted_cookie
     
-# @auth_route.route('/logout', methods=['GET', 'POST'])
-# def logout():
-#     service: AuthService = current_app.config["auth_service"]
-#     resp = service.logout()
-#     return resp
