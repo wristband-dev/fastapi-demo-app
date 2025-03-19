@@ -1,9 +1,5 @@
-- log out
-    - save refresh token and tenant domain name from session
-    - clear session in the backend
-    
-    - revoke refresh token api (if fails -> it keeps going -> set a timeout)
-    - redirect to the wristband logout endpoint
+- session endpoint
+    - auth middleware
 
 
 - refresh logic 

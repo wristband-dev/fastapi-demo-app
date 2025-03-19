@@ -5,6 +5,13 @@ import requests
 from src.sdk.models import TokenResponse
 
 
+class WristbandError(Exception):
+    def __init__(self, error_code: str, error_description: str) -> None:
+        self.error_code: str = error_code
+        self.error_description: str = error_description
+        super().__init__(f"{error_code}: {error_description}")
+
+
 class WristbandService:
     def __init__(self, wristband_application_domain: str, client_id: str, client_secret: str) -> None:
         credentials: str = f"{client_id}:{client_secret}"
@@ -42,6 +49,20 @@ class WristbandService:
             data=form_data,
             headers=self.headers
         )
+
+    def refresh_token(self, refresh_token: str) -> TokenResponse:
+        form_data: dict[str, str] = {
+            'grant_type': 'refresh_token',
+            'refresh_token': refresh_token
+        }
+
+        response: requests.Response = requests.post(
+            self.base_url + '/oauth2/token',
+            data=form_data, 
+            headers=self.headers
+        )
+
+        return TokenResponse.from_api_response(response.json())
 
 
     def get_userinfo(self, access_token: str) -> dict[str, Any]:

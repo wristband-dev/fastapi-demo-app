@@ -1,4 +1,5 @@
 import base64
+from datetime import datetime
 import secrets
 import time
 import json
@@ -9,11 +10,13 @@ from flask import Request, Response, make_response
 from cryptography.fernet import Fernet
 import logging
 
+import requests
 from werkzeug.datastructures.structures import ImmutableMultiDict
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-from src.sdk.wristband_service import WristbandService
+from sdk.models import TokenData, TokenResponse
+from src.sdk.wristband_service import WristbandError, WristbandService
 from src.sdk.enums import CallbackResultType
 from src.sdk.models import CallbackData, CallbackResult, LoginConfig, LoginState, AuthConfig, LogoutConfig
 
@@ -110,6 +113,9 @@ class AuthService:
         code: str | None = req.args.get('code')
         param_state: str | None = req.args.get('state')
         error: str | None = req.args.get('error')
+
+
+        # TODO - there could be more than one error_description param
         error_description: str | None = req.args.get('error_description')
         tenant_custom_domain_param: str | None = req.args.get('tenant_custom_domain')
 
@@ -232,11 +238,7 @@ class AuthService:
             redirect_response=None
         )
 
-    def logout(
-        self, 
-        req: Request, 
-        config: Optional[LogoutConfig] = None
-    ) -> Response:
+    def logout(self, req: Request, config: Optional[LogoutConfig] = None) -> Response:
         # make response to return to client
         res: Response = make_response()
         
@@ -298,6 +300,48 @@ class AuthService:
 
         return res
 
+    def refresh_token_if_expired(self, refresh_token: Optional[str], expires_at: Optional[int]) -> None | TokenData:
+
+        # Safety checks
+        if not refresh_token:
+            raise TypeError('Refresh token must be a valid string')
+        if not expires_at or expires_at < 0:
+            raise TypeError('The expiresAt field must be an integer greater than 0')
+
+        # Nothing to do here if the access token is still valid
+        if not self.is_expired(expires_at):
+            return None
+
+        # Try up to 3 times to perform a token refresh
+        retries = 2
+        timeout = 0.1  # 100ms
+
+        for attempt in range(retries + 1):
+            try:
+                token_response: TokenResponse = self.wristband_service.refresh_token(refresh_token)
+                break
+            except requests.exceptions.RequestException as error:
+                
+                # Handle 4xx errors - don't retry these
+                if error.response and 400 <= error.response.status_code < 500:
+                    error_description: Any | Literal['Invalid Refresh Token'] = error.response.json().get('error_description', 'Invalid Refresh Token') if hasattr(error.response, 'json') else 'Invalid Refresh Token'
+
+                    raise WristbandError('invalid_refresh_token', error_description)
+
+                # On last attempt, raise the error
+                if attempt == retries:
+                    raise WristbandError('unexpected_error', 'Unexpected Error')
+
+                # Wait before retrying
+                time.sleep(timeout)
+
+        if token_response:
+            return TokenData.from_token_response(token_response)
+
+        # Safety check that should never happen
+        raise WristbandError('unexpected_error', 'Unexpected Error')
+
+
     # --------- Login State Cookie Management --------- #
     def _resolve_tenant_custom_domain_param(self, req: Request) -> str:
         tenant_custom_domain = req.args.get('tenant_custom_domain')
@@ -341,14 +385,14 @@ class AuthService:
             custom_state=custom_state
         )
     
-    def _clear_login_state_cookie(self, res: Response, cookie_name: str, dangerously_disable_secure_cookies: bool):
+    def _clear_login_state_cookie(self, res: Response, cookie_name: str, dangerously_disable_secure_cookies: bool) -> None:
         cookie_attributes = [
             f"{cookie_name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
             '' if dangerously_disable_secure_cookies else 'Secure'
         ]
         res.headers.add('Set-Cookie', '; '.join(cookie_attributes))
 
-    def create_callback_response(self, req: Request, redirect_url: str) -> Response:
+    def _create_callback_response(self, req: Request, redirect_url: str) -> Response:
         if not redirect_url:
             raise TypeError('redirect_url cannot be null or empty')
 
@@ -467,3 +511,5 @@ class AuthService:
     def _revoke_refresh_token(self, refresh_token: str) -> None:
         self.wristband_service.revoke_refresh_token(refresh_token)
 
+    def is_expired(self, expires_at: int) -> bool:
+        return expires_at < int(datetime.now().timestamp() * 1000)

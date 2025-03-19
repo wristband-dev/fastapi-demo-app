@@ -52,6 +52,30 @@ class AuthConfig:
     # TODO - add validation on auth config fields
 
 @dataclass
+class SessionData:
+    is_authenticated: bool
+    access_token: str
+    expires_at: int
+    tenant_domain_name: str
+    tenant_custom_domain: str
+    user_info: dict[str, Any]
+    refresh_token: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+    
+    def to_session_init_data(self) -> dict[str, Any]:
+        return {
+            "is_authenticated": self.is_authenticated,
+            "user_info": self.user_info,
+        }
+    
+    @staticmethod
+    def from_dict(data: dict[str, Any]) -> 'SessionData':
+        return SessionData(**data)
+
+
+@dataclass
 class CallbackData:
     access_token: str
     id_token: str
@@ -68,15 +92,32 @@ class CallbackData:
         return asdict(self)
     
     def to_session(self) -> dict[str, Any]:
-        return {
-            "is_authenticated": True,
-            "access_token": self.access_token,
-            "expires_at": int((datetime.now() + timedelta(seconds=self.expires_in)).timestamp() * 1000),
-            "tenant_domain_name": self.tenant_domain_name,
-            "tenant_custom_domain": self.tenant_custom_domain,
-            "user_info": self.user_info,
-            "refresh_token": self.refresh_token,
-        }
+        return SessionData(
+            is_authenticated=True,
+            access_token=self.access_token,
+            expires_at=int((datetime.now() + timedelta(seconds=self.expires_in)).timestamp() * 1000),
+            tenant_domain_name=self.tenant_domain_name,
+            tenant_custom_domain=self.tenant_custom_domain or "",
+            user_info=self.user_info,
+            refresh_token=self.refresh_token or ""
+        ).to_dict()
+
+@dataclass
+class TokenData:
+    access_token: str
+    id_token: str
+    expires_at: int
+    refresh_token: str
+
+    @staticmethod
+    def from_token_response(token_response: 'TokenResponse') -> 'TokenData':
+        return TokenData(
+            access_token=token_response.access_token,
+            id_token=token_response.id_token,
+            expires_at=int((datetime.now() + timedelta(seconds=token_response.expires_in)).timestamp() * 1000),
+            refresh_token=token_response.refresh_token
+        )
+    
 
 @dataclass
 class CallbackResult:

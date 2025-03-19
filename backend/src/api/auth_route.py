@@ -5,11 +5,34 @@ from requests import Session
 
 from src.sdk.utils import to_bool
 from src.sdk.enums import CallbackResultType
-from src.sdk.models import CallbackResult, LogoutConfig
+from src.sdk.models import CallbackResult, LogoutConfig, SessionData
 from src.sdk.auth_service import AuthService
 from src.sdk.cookie_encryptor import CookieEncryptor
 
 auth_route = Blueprint('auth', __name__)
+
+"""
+1
+call session endpoint on initial page load
+    - next js page router app demo has this
+"""
+
+"""
+2
+https://blog.teclado.com/protecting-endpoints-in-flask-apps-by-requiring-login/
+
+add middleware logic to check if the user is authenticated in the session
+check if the access token exists
+check if the access token is expired
+if the refresh token exists, try to refresh the access token
+
+ELSE throw 401
+
+"""
+def login_required(func):
+    return func
+
+
 
 @auth_route.route('/login', methods=['GET', 'POST'])
 def login() -> Response | Any:
@@ -29,7 +52,7 @@ def callback() -> Response | Any:
     if app_home_url is None:
         raise ValueError("Missing required environment variable: APP_HOME_URL")
     
-    resp: Response = service.create_callback_response(request, app_home_url)
+    resp: Response = service._create_callback_response(request, app_home_url)
 
     session_secret_cookie: Optional[str] = os.getenv("SESSION_COOKIE_SECRET")
     if session_secret_cookie is None:
@@ -42,7 +65,9 @@ def callback() -> Response | Any:
 
     resp.set_cookie(
         key="session",
-        value=CookieEncryptor(session_secret_cookie).encrypt(callback_result.callback_data.to_session()),
+        value=CookieEncryptor(session_secret_cookie).encrypt(
+            callback_result.callback_data.to_session()
+        ),
         secure=secure,
         httponly=True,
         samesite="lax"
@@ -94,6 +119,27 @@ def logout() -> Response | Any:
 
     return resp
 
+@auth_route.route('/session', methods=['GET', 'POST'])
+def session() -> Response | Any:
+    session_secret_cookie: Optional[str] = os.getenv("SESSION_COOKIE_SECRET")
+    if session_secret_cookie is None:
+        raise ValueError("Missing required environment variable: SESSION_COOKIE_SECRET")
+
+    # Get the session cookie
+    session: Optional[str] = request.cookies.get("session")
+    if session is None:
+        return "No session found", 401
+
+    # Decrypt the session cookie
+    session_data: SessionData = SessionData.from_dict(
+        CookieEncryptor(session_secret_cookie).decrypt(session)
+    )
+
+    # Return the session data
+    return session_data.to_session_init_data()
+
+
+
 
 @auth_route.route('/test_decrypt_cookie', methods=['GET', 'POST'])
 def test_decrypt_cookie() -> Response | Any:
@@ -101,7 +147,7 @@ def test_decrypt_cookie() -> Response | Any:
     if session_secret_cookie is None:
         raise ValueError("Missing required environment variable: SESSION_COOKIE_SECRET")
 
-    cookie_value = request.cookies.get("session")
+    cookie_value: str | None = request.cookies.get("session")
     if cookie_value is None:
         return "No cookie found", 400
 
@@ -109,4 +155,3 @@ def test_decrypt_cookie() -> Response | Any:
     print(f"Decrypted cookie: {decrypted_cookie}")
     
     return decrypted_cookie
-    

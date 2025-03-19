@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 from src.sdk.models import AuthConfig
 from src.sdk.auth_service import AuthService
 from src.api.auth_route import auth_route
@@ -18,7 +17,7 @@ def create_app() -> Flask:
     app = Flask(__name__)
 
     # SETUP LOGGING
-    root_logger = logging.getLogger()
+    root_logger: logging.Logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)
@@ -54,7 +53,6 @@ def create_app() -> Flask:
         raise ValueError("SCOPES must be a valid Python list literal (e.g. \"['openid','email']\").")
 
     # Convert string-based boolean environment variables
-
     auth_config = AuthConfig(
         client_id=os.getenv("CLIENT_ID", ""),
         client_secret=os.getenv("CLIENT_SECRET", ""),
@@ -73,10 +71,13 @@ def create_app() -> Flask:
     auth_service = AuthService(auth_config)
     app.config["auth_service"] = auth_service # allow the auth service to be accessed by any route
 
+    # register the auth routes
     app.register_blueprint(auth_route, url_prefix='/api/auth')
 
     return app
+
+
     
 if __name__ == '__main__':
-    app = create_app()
+    app: Flask = create_app()
     app.run(host='0.0.0.0', port=8080, debug=True)
