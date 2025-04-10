@@ -1,17 +1,21 @@
 import os
-from typing import Any, Optional
-from fastapi import APIRouter, Request
+from typing import Any, Optional, List, Callable
+import json
+from fastapi import APIRouter, Request, HTTPException, status
 from fastapi import Request
 from fastapi.routing import APIRouter
 from fastapi import FastAPI
-from fastapi.responses import RedirectResponse, Response
+from fastapi.responses import RedirectResponse, Response, JSONResponse
 from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.sdk.utils import debug_request, to_bool
 from src.sdk.enums import CallbackResultType
 from src.sdk.models import CallbackResult, LogoutConfig, SessionData
 from src.sdk.auth_service import AuthService
 from src.sdk.cookie_encryptor import CookieEncryptor
+from src.api.auth_middleware import SessionAuthMiddleware
 
 router = APIRouter()
 app = FastAPI()
@@ -20,27 +24,25 @@ app = FastAPI()
 async def debug_request_middleware(request: Request, call_next):
     return await debug_request(request, call_next)
 
-"""
-1
-call session endpoint on initial page load
-    - next js page router app demo has this
-"""
-def login_required(func):
-    return func
-"""
-2
-https://blog.teclado.com/protecting-endpoints-in-flask-apps-by-requiring-login/
+# Public paths that don't require authentication
+PUBLIC_PATHS: List[str] = [
+    "/api/auth/login",
+    "/api/auth/callback",
+    "/api/auth/logout",
+    "/api/auth/test_decrypt_cookie"
+]
 
-add middleware logic to check if the user is authenticated in the session
-check if the access token exists
-check if the access token is expired
-if the refresh token exists, try to refresh the access token
+# Add the session middleware to the app
+app.add_middleware(SessionAuthMiddleware)
 
-ELSE throw 401
-
-"""
-
-
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @router.route('/session', methods=['GET', 'POST'])
 def session(request: Request) -> Response | Any:
@@ -51,15 +53,57 @@ def session(request: Request) -> Response | Any:
     # Get the session cookie
     session: Optional[str] = request.cookies.get("session")
     if session is None:
-        return "No session found", 401
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "No session found"}
+        )
 
-    # Decrypt the session cookie
-    session_data: SessionData = SessionData.from_dict(
-        CookieEncryptor(session_secret_cookie).decrypt(session)
-    )
-
-    # Return the session data
-    return session_data.to_session_init_data()
+    try:
+        # Decrypt the session cookie
+        session_data_dict = CookieEncryptor(session_secret_cookie).decrypt(session)
+        session_data = SessionData.from_dict(session_data_dict)
+        
+        # Check if we need to refresh the token
+        auth_service: AuthService = request.app.state.auth_service
+        if auth_service.is_expired(session_data.expires_at) and session_data.refresh_token:
+            new_token_data = auth_service.refresh_token_if_expired(
+                session_data.refresh_token, 
+                session_data.expires_at
+            )
+            
+            if new_token_data:
+                # Update session with new token data
+                session_data.access_token = new_token_data.access_token
+                session_data.refresh_token = new_token_data.refresh_token
+                session_data.expires_at = new_token_data.expires_at
+                
+                # Create a new response with updated session data
+                response = JSONResponse(content=session_data.to_session_init_data())
+                
+                # Update the session cookie
+                encrypted_session = CookieEncryptor(session_secret_cookie).encrypt(
+                    session_data.to_dict()
+                )
+                
+                secure: bool = not to_bool(os.getenv("DANGEROUSLY_DISABLE_SECURE_COOKIES", "False"))
+                response.set_cookie(
+                    key="session",
+                    value=encrypted_session,
+                    secure=secure,
+                    httponly=True,
+                    samesite="lax"
+                )
+                
+                return response
+        
+        # Return the session data
+        return JSONResponse(content=session_data.to_session_init_data())
+    except Exception as e:
+        print(f"Session endpoint error: {str(e)}")
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": f"Session error: {str(e)}"}
+        )
 
 @router.route('/login', methods=['GET', 'POST'])
 def login(request: Request) -> Response | Any:
