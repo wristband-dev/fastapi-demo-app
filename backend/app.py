@@ -89,7 +89,7 @@ def create_app() -> FastAPI:
     
     # Store auth_service in the app state
     app.state.auth_service = auth_service
-    
+
     # Include routers
     app.include_router(auth_route.router, prefix='/api/auth')
     
