@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export default function Home() {
+
   const [response, setResponse] = useState<string | null>(null);
   const [logoutMessage, setLogoutMessage] = useState<string | null>(null);
   const router = useRouter();

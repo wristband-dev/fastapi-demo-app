@@ -30,12 +30,16 @@ class WristbandService:
             'redirect_uri': redirect_uri,
             'code_verifier': code_verifier,
         }
+        
 
         response: requests.Response = requests.post(
             self.base_url + '/oauth2/token', 
             data=form_data,
             headers=self.headers
         )
+
+        if response.status_code != 200:
+            raise WristbandError(response.json()['error'], response.json()['error_description'])
 
         return TokenResponse.from_api_response(response.json())
     

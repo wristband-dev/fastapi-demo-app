@@ -1,9 +1,9 @@
 from dataclasses import dataclass, asdict, field
 from datetime import datetime, timedelta
-import logging
 from typing import Any, Optional, List
 
-from flask import Response
+from fastapi.responses import RedirectResponse
+
 
 from src.sdk.enums import CallbackResultType
 
@@ -123,7 +123,7 @@ class TokenData:
 class CallbackResult:
     callback_data: Optional[CallbackData]
     type: CallbackResultType
-    redirect_response: Optional[Response]
+    redirect_response: Optional[RedirectResponse]
 
 @dataclass
 class TokenResponse:

@@ -1,20 +1,23 @@
 import ast
 import logging
 import os
-from flask import Flask
+import uvicorn
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
 from src.sdk.models import AuthConfig
 from src.sdk.auth_service import AuthService
-from src.api.auth_route import auth_route
+from src.api import auth_route
 from src.sdk.utils import to_bool
 
-
-def create_app() -> Flask:
-
-    app = Flask(__name__)
+def create_app() -> FastAPI:
+    
+    # Initialize the FastAPI app
+    app = FastAPI()
 
     # SETUP LOGGING
     root_logger: logging.Logger = logging.getLogger()
@@ -69,15 +72,31 @@ def create_app() -> Flask:
     )
 
     auth_service = AuthService(auth_config)
-    app.config["auth_service"] = auth_service # allow the auth service to be accessed by any route
-
-    # register the auth routes
-    app.register_blueprint(auth_route, url_prefix='/api/auth')
-
+    
+    # Allow CORS
+    origins: list[str] = [
+        "*"
+    ]
+    
+    # Add CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
+    # Store auth_service in the app state
+    app.state.auth_service = auth_service
+    
+    # Include routers
+    app.include_router(auth_route.router, prefix='/api/auth')
+    
     return app
 
 
-    
+app: FastAPI = create_app()
+
 if __name__ == '__main__':
-    app: Flask = create_app()
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    uvicorn.run("app:app", host='0.0.0.0', port=8080, reload=True)
