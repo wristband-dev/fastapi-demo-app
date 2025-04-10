@@ -1,13 +1,12 @@
 import os
-from typing import Any, Optional, List, Callable
+from typing import Any, Optional, List
 import json
-from fastapi import APIRouter, Request, HTTPException, status
+from fastapi import APIRouter, Request, status
 from fastapi import Request
 from fastapi.routing import APIRouter
 from fastapi import FastAPI
-from fastapi.responses import RedirectResponse, Response, JSONResponse
+from fastapi.responses import Response, JSONResponse
 from pydantic import BaseModel
-from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.sdk.utils import debug_request, to_bool
