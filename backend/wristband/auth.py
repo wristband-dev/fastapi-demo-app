@@ -17,7 +17,7 @@ from starlette.datastructures import MutableHeaders
 logger: logging.Logger = logging.getLogger(__name__)
 
 from wristband.models import TokenData, TokenResponse
-from wristband.wristband_service import WristbandError, WristbandService
+from wristband.api import WristbandError, WristbandService
 from wristband.enums import CallbackResultType
 from wristband.models import (
     CallbackData,
@@ -29,7 +29,7 @@ from wristband.models import (
 )
 
 
-class AuthService:
+class Auth:
     """
     static values shared by all instances of classes
     """
@@ -61,7 +61,7 @@ class AuthService:
         self.use_tenant_subdomains: bool = auth_config.use_tenant_subdomains
         # TODO - validation on auth config fields
 
-        self.wristband_service = WristbandService(
+        self.api = WristbandService(
             wristband_application_domain=self.wristband_application_domain,
             client_id=self.client_id,
             client_secret=self.client_secret,
@@ -256,14 +256,14 @@ class AuthService:
             raise ValueError(f"OAuth error: {error}. Description: {error_description}")
 
         #    Here you would call your Wristband token endpoint. Example:
-        token_response: TokenResponse = self.wristband_service.get_tokens(
+        token_response: TokenResponse = self.api.get_tokens(
             code=code,
             redirect_uri=login_state.redirect_uri,
             code_verifier=login_state.code_verifier,
         )
 
         # 10) Fetch userinfo (again, depends on your own implementation)
-        userinfo: dict[str, Any] = self.wristband_service.get_userinfo(
+        userinfo: dict[str, Any] = self.api.get_userinfo(
             token_response.access_token
         )
 
@@ -380,7 +380,7 @@ class AuthService:
 
         for attempt in range(retries + 1):
             try:
-                token_response: TokenResponse = self.wristband_service.refresh_token(
+                token_response: TokenResponse = self.api.refresh_token(
                     refresh_token
                 )
                 break
@@ -632,7 +632,7 @@ class AuthService:
         return LoginState(**login_state_dict)
 
     def _revoke_refresh_token(self, refresh_token: str) -> None:
-        self.wristband_service.revoke_refresh_token(refresh_token)
+        self.api.revoke_refresh_token(refresh_token)
 
     def is_expired(self, expires_at: int) -> bool:
         return expires_at < int(datetime.now().timestamp() * 1000)

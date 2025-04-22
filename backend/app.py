@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from wristband.models import AuthConfig
-from wristband.auth_service import AuthService
+from wristband.auth import Auth
 from src.api import auth_route
 from wristband.utils import to_bool
 
@@ -71,7 +71,7 @@ def create_app() -> FastAPI:
         use_tenant_subdomains=to_bool(os.getenv("USE_TENANT_SUBDOMAINS", "False")),
     )
 
-    auth_service = AuthService(auth_config)
+    auth = Auth(auth_config)
     
     # Allow CORS
     origins: list[str] = [
@@ -87,8 +87,8 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     
-    # Store auth_service in the app state
-    app.state.auth_service = auth_service
+    # Store auth in the app state
+    app.state.auth = auth
 
     # Include routers
     app.include_router(auth_route.router, prefix='/api/auth')

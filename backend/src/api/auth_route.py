@@ -12,8 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from wristband.utils import debug_request, to_bool
 from wristband.enums import CallbackResultType
 from wristband.models import CallbackResult, LogoutConfig, SessionData
-from wristband.auth_service import AuthService
-from wristband.cookie_encryptor import CookieEncryptor
+from wristband.auth import Auth
+from wristband.utils import CookieEncryptor
 from src.api.auth_middleware import SessionAuthMiddleware
 
 router = APIRouter()
@@ -63,9 +63,9 @@ def session(request: Request) -> Response | Any:
         session_data = SessionData.from_dict(session_data_dict)
         
         # Check if we need to refresh the token
-        auth_service: AuthService = request.app.state.auth_service
-        if auth_service.is_expired(session_data.expires_at) and session_data.refresh_token:
-            new_token_data = auth_service.refresh_token_if_expired(
+        auth: Auth = request.app.state.auth
+        if auth.is_expired(session_data.expires_at) and session_data.refresh_token:
+            new_token_data = auth.refresh_token_if_expired(
                 session_data.refresh_token, 
                 session_data.expires_at
             )
@@ -106,14 +106,14 @@ def session(request: Request) -> Response | Any:
 
 @router.route('/login', methods=['GET', 'POST'])
 def login(request: Request) -> Response | Any:
-    service: AuthService = request.app.state.auth_service    
+    service: Auth = request.app.state.auth    
     resp: Response = service.login(req=request)
     return resp
 
 @router.route('/callback', methods=['GET', 'POST'])
 def callback(request: Request) -> Response | Any:
 
-    service: AuthService = request.app.state.auth_service
+    service: Auth = request.app.state.auth
     callback_result: CallbackResult = service.callback(req=request)
 
     if callback_result.type == CallbackResultType.REDIRECT_REQUIRED and callback_result.redirect_response:
@@ -158,7 +158,7 @@ def logout(request: Request) -> Response | Any:
     secure: bool = not to_bool(os.getenv("DANGEROUSLY_DISABLE_SECURE_COOKIES", "False"))
 
     # Get the auth service from the current app
-    service: AuthService = request.app.state.auth_service
+    service: Auth = request.app.state.auth
 
     # Get the session from the request
     session: Optional[str] = request.cookies.get("session")

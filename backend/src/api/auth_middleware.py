@@ -5,8 +5,8 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from wristband.models import SessionData
-from wristband.auth_service import AuthService
-from wristband.cookie_encryptor import CookieEncryptor
+from wristband.auth import Auth
+from wristband.utils import CookieEncryptor
 from wristband.utils import to_bool
 
 # Public paths that don't require authentication
@@ -51,12 +51,12 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                 )
                 
             # Check if access token is expired
-            auth_service: AuthService = request.app.state.auth_service
-            if auth_service.is_expired(session_data.expires_at):
+            auth: Auth = request.app.state.auth
+            if auth.is_expired(session_data.expires_at):
                 # Try to refresh the token if refresh token exists
                 if session_data.refresh_token:
                     # Refresh the token
-                    new_token_data = auth_service.refresh_token_if_expired(
+                    new_token_data = auth.refresh_token_if_expired(
                         session_data.refresh_token, 
                         session_data.expires_at
                     )
