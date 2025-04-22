@@ -10,19 +10,27 @@ NC='\033[0m' # No Color
 echo -e "${BLUE}=== Wristband Python FastAPI Accelerator ===${NC}"
 echo -e "${BLUE}=== Interactive Development Setup ===${NC}"
 
-# Check if .env files exist
+# Create example .env file if it doesn't exist
 if [ ! -f ./backend/.env ]; then
-  echo -e "${RED}Error: No .env file found in backend directory.${NC}"
-  echo -e "${YELLOW}Please create backend/.env with required variables:${NC}"
-  echo "CLIENT_ID=your_wristband_client_id"
-  echo "CLIENT_SECRET=your_wristband_client_secret"
-  echo "LOGIN_STATE_SECRET=your_secure_random_string"
-  echo "LOGIN_URL=your_wristband_login_url"
-  echo "REDIRECT_URI=https://localhost:8080/api/auth/callback"
-  echo "APP_HOME_URL=http://localhost:3000"
-  echo "SESSION_COOKIE_SECRET=your_secure_random_string"
-  echo "SCOPES=['openid', 'offline_access', 'email']"
-  exit 1
+  echo -e "${YELLOW}No .env file found in backend directory. Creating example file...${NC}"
+  cat > ./backend/.env.example << EOL
+CLIENT_ID=your_wristband_client_id
+CLIENT_SECRET=your_wristband_client_secret
+LOGIN_STATE_SECRET=your_secure_random_string
+LOGIN_URL=your_wristband_login_url
+REDIRECT_URI=https://localhost:8080/api/auth/callback
+APP_HOME_URL=http://localhost:3000
+SESSION_COOKIE_SECRET=your_secure_random_string
+SCOPES=['openid', 'offline_access', 'email']
+EOL
+  echo -e "${YELLOW}Example .env file created at ./backend/.env.example${NC}"
+  echo -e "${YELLOW}Please rename it to .env and update with your actual values${NC}"
+  
+  # Ask if the user wants to continue
+  read -p "Do you want to continue without a backend .env file? (y/n): " CONTINUE
+  if [[ "$CONTINUE" != "y" && "$CONTINUE" != "Y" ]]; then
+    exit 1
+  fi
 fi
 
 # Function to check if a command exists
@@ -82,50 +90,81 @@ read -p "Enter your choice (1-3): " CHOICE
 case $CHOICE in
   1)
     echo -e "${YELLOW}Starting backend in a new terminal window...${NC}"
+    
+    # Generate a script file for the backend
+    BACKEND_SCRIPT="./backend-start.sh"
+    cat > $BACKEND_SCRIPT << EOL
+#!/bin/bash
+cd "$(pwd)/backend"
+echo "Installing backend dependencies..."
+poetry install
+echo "Starting backend server..."
+poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload
+EOL
+    
+    chmod +x $BACKEND_SCRIPT
+    
     if [[ "$OSTYPE" == "darwin"* ]]; then
-      # macOS
-      osascript -e 'tell application "Terminal" to do script "cd '$PWD'/backend && poetry install && poetry shell && uvicorn app:app --host 0.0.0.0 --port 8080 --reload"'
+      # macOS - more reliable method
+      echo -e "${YELLOW}Opening new terminal window for backend...${NC}"
+      open -a Terminal.app $BACKEND_SCRIPT
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
       # Linux
       if command_exists gnome-terminal; then
-        gnome-terminal -- bash -c "cd '$PWD'/backend && poetry install && poetry shell && uvicorn app:app --host 0.0.0.0 --port 8080 --reload; exec bash"
+        gnome-terminal -- bash -c "$(pwd)/$BACKEND_SCRIPT; exec bash"
       elif command_exists xterm; then
-        xterm -e "cd '$PWD'/backend && poetry install && poetry shell && uvicorn app:app --host 0.0.0.0 --port 8080 --reload" &
+        xterm -e "$(pwd)/$BACKEND_SCRIPT" &
       else
-        echo -e "${RED}Cannot open a new terminal window. Please start the backend manually in a new terminal.${NC}"
-        echo -e "${YELLOW}Run these commands in a new terminal:${NC}"
-        echo "cd '$PWD'/backend"
+        echo -e "${RED}Cannot open a new terminal window automatically.${NC}"
+        echo -e "${YELLOW}Please start the backend manually in a new terminal:${NC}"
+        echo "cd $(pwd)/backend"
         echo "poetry install"
-        echo "poetry shell"
-        echo "uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
+        echo "poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
       fi
     else
       # Windows or other
-      echo -e "${RED}Cannot open a new terminal window on this OS. Please start the backend manually in a new terminal.${NC}"
-      echo -e "${YELLOW}Run these commands in a new terminal:${NC}"
-      echo "cd '$PWD'/backend"
+      echo -e "${RED}Cannot open a new terminal window automatically.${NC}"
+      echo -e "${YELLOW}Please start the backend manually in a new terminal:${NC}"
+      echo "cd $(pwd)/backend"
       echo "poetry install"
-      echo "poetry shell"
-      echo "uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
+      echo "poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
     fi
     
     echo -e "${YELLOW}Starting frontend...${NC}"
     cd frontend
+    echo -e "${YELLOW}Installing frontend dependencies...${NC}"
     npm install
+    
+    echo -e "${BLUE}=== IMPORTANT ====${NC}"
+    echo -e "${YELLOW}The backend should be running at:${NC} http://localhost:8080"
+    echo -e "${YELLOW}Verify backend API is available at:${NC} http://localhost:8080/docs"
+    echo -e "${YELLOW}Now starting the frontend at:${NC} http://localhost:3000"
+    echo ""
+    
     npm run dev
     ;;
     
   2)
     echo -e "${YELLOW}Starting backend in the background...${NC}"
     cd backend
+    echo -e "${YELLOW}Installing backend dependencies...${NC}"
     poetry install
+    echo -e "${YELLOW}Starting backend server...${NC}"
     poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload &
     BACKEND_PID=$!
     echo -e "${GREEN}Backend started with PID: ${BACKEND_PID}${NC}"
     
     echo -e "${YELLOW}Starting frontend...${NC}"
     cd ../frontend
+    echo -e "${YELLOW}Installing frontend dependencies...${NC}"
     npm install
+    
+    echo -e "${BLUE}=== IMPORTANT ====${NC}"
+    echo -e "${YELLOW}The backend is running at:${NC} http://localhost:8080"
+    echo -e "${YELLOW}Verify backend API is available at:${NC} http://localhost:8080/docs"
+    echo -e "${YELLOW}Now starting the frontend at:${NC} http://localhost:3000"
+    echo ""
+    
     npm run dev
     
     # Cleanup when script is terminated
@@ -145,11 +184,10 @@ case $CHOICE in
     
     echo -e "${GREEN}All dependencies installed. You can now start the services manually:${NC}"
     echo -e "${YELLOW}Backend:${NC}"
-    echo "cd backend"
-    echo "poetry shell"
-    echo "uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
+    echo "cd $(pwd)/../backend"
+    echo "poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
     echo -e "${YELLOW}Frontend:${NC}"
-    echo "cd frontend"
+    echo "cd $(pwd)"
     echo "npm run dev"
     ;;
     
@@ -159,11 +197,16 @@ case $CHOICE in
     ;;
 esac
 
-echo -e "${GREEN}Setup complete!${NC}"
+echo -e "${GREEN}Setup initiated!${NC}"
 echo -e "${BLUE}=== Testing Instructions ====${NC}"
-echo -e "${YELLOW}1. Backend should be running at:${NC} http://localhost:8080"
-echo -e "${YELLOW}   - Verify by visiting FastAPI docs:${NC} http://localhost:8080/docs"
-echo -e "${YELLOW}2. Frontend should be running at:${NC} http://localhost:3000"
+echo -e "${YELLOW}1. Backend URL:${NC} http://localhost:8080"
+echo -e "${YELLOW}   - API Documentation:${NC} http://localhost:8080/docs"
+echo -e "${YELLOW}2. Frontend URL:${NC} http://localhost:3000 ${GREEN}<-- Open this in your browser${NC}"
 echo -e "${YELLOW}3. Test authentication by clicking login on the frontend${NC}"
 echo -e "${YELLOW}   - This will redirect to Wristband${NC}"
-echo -e "${YELLOW}   - After authentication, you should be redirected back to the app${NC}" 
+echo -e "${YELLOW}   - After authentication, you should be redirected back to the app${NC}"
+echo ""
+echo -e "${BLUE}=== Environment Variables ====${NC}"
+echo -e "${YELLOW}Make sure your backend/.env file has these correctly set:${NC}"
+echo -e "${YELLOW}APP_HOME_URL=${GREEN}http://localhost:3000${NC} (Should match the frontend URL)"
+echo -e "${YELLOW}REDIRECT_URI=${GREEN}https://localhost:8080/api/auth/callback${NC} (Should match the backend callback URL)" 
