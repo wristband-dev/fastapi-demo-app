@@ -88,80 +88,36 @@ echo -e "${GREEN}All prerequisites met!${NC}"
 
 # Ask how to start the application
 echo -e "${YELLOW}How would you like to start the application?${NC}"
-echo "1) Start backend and frontend in separate terminals (recommended)"
-echo "2) Start backend in the background and frontend in this terminal"
-echo "3) Install dependencies only (don't start services)"
-read -p "Enter your choice (1-3): " CHOICE
-
-# Set up the backend command with proper env file reference
-BACKEND_CMD_BASE="cd \"$(pwd)/backend\" && echo \"Installing backend dependencies...\" && poetry install && echo \"Starting backend server...\""
-if [ -n "$ENV_PATH" ]; then
-  BACKEND_CMD="$BACKEND_CMD_BASE && PYTHON_DOTENV_FILE=\"$ENV_PATH\" poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
-else
-  BACKEND_CMD="$BACKEND_CMD_BASE && poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
-fi
+echo "1) Start frontend and install backend dependencies"
+echo "2) Install dependencies only (don't start services)"
+read -p "Enter your choice (1-2): " CHOICE
 
 case $CHOICE in
   1)
-    echo -e "${YELLOW}Starting backend in a new terminal window...${NC}"
-    
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-      # macOS - using a temporary file approach instead
-      echo -e "${YELLOW}Opening new terminal window for backend...${NC}"
-      # Create temporary script file
-      TEMP_SCRIPT=$(mktemp /tmp/backend-start.XXXXXX.sh)
-      echo "#!/bin/bash" > "$TEMP_SCRIPT"
-      echo "cd \"$(pwd)/backend\"" >> "$TEMP_SCRIPT"
-      echo "echo \"Installing backend dependencies...\"" >> "$TEMP_SCRIPT"
-      echo "poetry install" >> "$TEMP_SCRIPT"
-      echo "echo \"Starting backend server...\"" >> "$TEMP_SCRIPT"
-      if [ -n "$ENV_PATH" ]; then
-        echo "PYTHON_DOTENV_FILE=\"$ENV_PATH\" poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload" >> "$TEMP_SCRIPT"
-      else
-        echo "poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload" >> "$TEMP_SCRIPT"
-      fi
-      chmod +x "$TEMP_SCRIPT"
-      
-      # Run the script in a new terminal
-      osascript -e "tell application \"Terminal\" to do script \"$TEMP_SCRIPT\""
-    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-      # Linux
-      if command_exists gnome-terminal; then
-        gnome-terminal -- bash -c "$BACKEND_CMD; exec bash"
-      elif command_exists xterm; then
-        xterm -e "$BACKEND_CMD" &
-      else
-        echo -e "${RED}Cannot open a new terminal window automatically.${NC}"
-        echo -e "${YELLOW}Please start the backend manually in a new terminal:${NC}"
-        echo "cd $(pwd)/backend"
-        echo "poetry install"
-        if [ -n "$ENV_PATH" ]; then
-          echo "PYTHON_DOTENV_FILE=\"$ENV_PATH\" poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
-        else
-          echo "poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
-        fi
-      fi
-    else
-      # Windows or other
-      echo -e "${RED}Cannot open a new terminal window automatically.${NC}"
-      echo -e "${YELLOW}Please start the backend manually in a new terminal:${NC}"
-      echo "cd $(pwd)/backend"
-      echo "poetry install"
-      if [ -n "$ENV_PATH" ]; then
-        echo "PYTHON_DOTENV_FILE=\"$ENV_PATH\" poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
-      else
-        echo "poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
-      fi
-    fi
+    # Install backend dependencies but don't start the backend
+    echo -e "${YELLOW}Installing backend dependencies...${NC}"
+    cd backend
+    poetry install
+    cd ..
     
     echo -e "${YELLOW}Starting frontend...${NC}"
     cd frontend
     echo -e "${YELLOW}Installing frontend dependencies...${NC}"
     npm install
     
+    # Backend startup instruction message
+    BACKEND_START_CMD=""
+    if [ -n "$ENV_PATH" ]; then
+      BACKEND_START_CMD="cd \"$(pwd)/../backend\" && PYTHON_DOTENV_FILE=\"$ENV_PATH\" poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
+    else
+      BACKEND_START_CMD="cd \"$(pwd)/../backend\" && poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
+    fi
+    
     echo -e "${BLUE}=== IMPORTANT ====${NC}"
-    echo -e "${YELLOW}The backend should be running at:${NC} http://localhost:8080"
-    echo -e "${YELLOW}Verify backend API is available at:${NC} http://localhost:8080/docs"
+    echo -e "${YELLOW}Please create a new terminal and run the following command to start the backend:${NC}"
+    echo -e "${GREEN}$BACKEND_START_CMD${NC}"
+    echo -e "${YELLOW}The backend should be available at:${NC} http://localhost:8080"
+    echo -e "${YELLOW}Verify backend API at:${NC} http://localhost:8080/docs"
     echo -e "${YELLOW}Now starting the frontend at:${NC} http://localhost:3000"
     echo ""
     
@@ -169,39 +125,6 @@ case $CHOICE in
     ;;
     
   2)
-    echo -e "${YELLOW}Starting backend in the background...${NC}"
-    cd backend
-    echo -e "${YELLOW}Installing backend dependencies...${NC}"
-    poetry install
-    echo -e "${YELLOW}Starting backend server...${NC}"
-    
-    if [ -n "$ENV_PATH" ]; then
-      PYTHON_DOTENV_FILE="$ENV_PATH" poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload &
-    else
-      poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload &
-    fi
-    
-    BACKEND_PID=$!
-    echo -e "${GREEN}Backend started with PID: ${BACKEND_PID}${NC}"
-    
-    echo -e "${YELLOW}Starting frontend...${NC}"
-    cd ../frontend
-    echo -e "${YELLOW}Installing frontend dependencies...${NC}"
-    npm install
-    
-    echo -e "${BLUE}=== IMPORTANT ====${NC}"
-    echo -e "${YELLOW}The backend is running at:${NC} http://localhost:8080"
-    echo -e "${YELLOW}Verify backend API is available at:${NC} http://localhost:8080/docs"
-    echo -e "${YELLOW}Now starting the frontend at:${NC} http://localhost:3000"
-    echo ""
-    
-    npm run dev
-    
-    # Cleanup when script is terminated
-    trap "kill $BACKEND_PID; echo -e '${YELLOW}Shutting down backend server...${NC}'" EXIT
-    ;;
-    
-  3)
     echo -e "${YELLOW}Installing backend dependencies...${NC}"
     cd backend
     poetry install
@@ -213,14 +136,19 @@ case $CHOICE in
     echo -e "${GREEN}Frontend dependencies installed.${NC}"
     
     echo -e "${GREEN}All dependencies installed. You can now start the services manually:${NC}"
-    echo -e "${YELLOW}Backend:${NC}"
-    echo "cd $(pwd)/../backend"
+    
+    # Backend startup instruction
+    BACKEND_START_CMD=""
     if [ -n "$ENV_PATH" ]; then
-      echo "PYTHON_DOTENV_FILE=\"$ENV_PATH\" poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
+      BACKEND_START_CMD="cd \"$(pwd)/../backend\" && PYTHON_DOTENV_FILE=\"$ENV_PATH\" poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
     else
-      echo "poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
+      BACKEND_START_CMD="cd \"$(pwd)/../backend\" && poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
     fi
-    echo -e "${YELLOW}Frontend:${NC}"
+    
+    echo -e "${YELLOW}To start the backend, open a new terminal and run:${NC}"
+    echo -e "${GREEN}$BACKEND_START_CMD${NC}"
+    
+    echo -e "${YELLOW}To start the frontend:${NC}"
     echo "cd $(pwd)"
     echo "npm run dev"
     ;;
