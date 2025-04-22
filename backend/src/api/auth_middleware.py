@@ -4,10 +4,10 @@ from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from src.sdk.models import SessionData
-from src.sdk.auth_service import AuthService
-from src.sdk.cookie_encryptor import CookieEncryptor
-from src.sdk.utils import to_bool
+from wristband.models import SessionData
+from wristband.auth_service import AuthService
+from wristband.cookie_encryptor import CookieEncryptor
+from wristband.utils import to_bool
 
 # Public paths that don't require authentication
 PUBLIC_PATHS: List[str] = [

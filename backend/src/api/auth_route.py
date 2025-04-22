@@ -9,11 +9,11 @@ from fastapi.responses import Response, JSONResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.sdk.utils import debug_request, to_bool
-from src.sdk.enums import CallbackResultType
-from src.sdk.models import CallbackResult, LogoutConfig, SessionData
-from src.sdk.auth_service import AuthService
-from src.sdk.cookie_encryptor import CookieEncryptor
+from wristband.utils import debug_request, to_bool
+from wristband.enums import CallbackResultType
+from wristband.models import CallbackResult, LogoutConfig, SessionData
+from wristband.auth_service import AuthService
+from wristband.cookie_encryptor import CookieEncryptor
 from src.api.auth_middleware import SessionAuthMiddleware
 
 router = APIRouter()

@@ -5,7 +5,7 @@ from typing import Any, Optional, List
 from fastapi.responses import RedirectResponse
 
 
-from src.sdk.enums import CallbackResultType
+from wristband.enums import CallbackResultType
 
 
 @dataclass

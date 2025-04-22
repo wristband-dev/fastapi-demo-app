@@ -9,10 +9,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from src.sdk.models import AuthConfig
-from src.sdk.auth_service import AuthService
+from wristband.models import AuthConfig
+from wristband.auth_service import AuthService
 from src.api import auth_route
-from src.sdk.utils import to_bool
+from wristband.utils import to_bool
 
 def create_app() -> FastAPI:
     
