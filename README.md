@@ -137,9 +137,23 @@ npm run dev
 
 ## Boot Up
 
-To get the entire application running, you need to start both the backend and frontend services. Here's the recommended way to do it:
+To get the entire application running, you have several options:
 
-### Option 1: Using Multiple Terminal Windows
+### Quick Start Command
+
+Simply run this command from the project root:
+
+```bash
+./run
+```
+
+This simple command will launch the interactive startup script that helps you set up both the backend and frontend.
+
+### Manual Options
+
+If you prefer to start the services manually:
+
+#### Option 1: Using Multiple Terminal Windows
 
 #### Terminal 1 - Backend
 ```bash
@@ -154,7 +168,7 @@ cd frontend
 npm run dev
 ```
 
-### Option 2: Using a Single Terminal with Background Processes
+#### Option 2: Using a Single Terminal with Background Processes
 
 ```bash
 # Start the backend
