@@ -19,54 +19,6 @@ The application follows a modern microservice architecture:
 - **Backend**: FastAPI server handling authentication and business logic
 - **Authentication**: Integration with Wristband for secure, multi-tenant authentication
 
-## Prerequisites
-
-- Python 3.11+
-- Node.js 16+
-- Poetry (Python package manager)
-- npm or yarn
-- Wristband account and configuration
-
-## Prerequisite Installation
-
-### Python 3.11+
-#### macOS
-```bash
-brew install python@3.11
-```
-
-#### Ubuntu/Debian
-```bash
-sudo apt update
-sudo apt install python3.11 python3.11-venv python3-pip
-```
-
-#### Windows
-Download and install from [python.org](https://www.python.org/downloads/)
-
-### Node.js 16+
-#### macOS
-```bash
-brew install node
-```
-
-#### Ubuntu/Debian
-```bash
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install nodejs
-```
-
-#### Windows
-Download and install from [nodejs.org](https://nodejs.org/)
-
-### Poetry
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-```
-or
-```bash
-pip install poetry
-```
 
 ## Setup Instructions
 
@@ -192,6 +144,55 @@ npm run dev
 3. Test authentication by clicking the login button on the frontend
    - This should redirect you to Wristband for authentication
    - After successful authentication, you should be redirected back to the application
+
+## Prerequisites
+
+- Python 3.11+
+- Node.js 16+
+- Poetry (Python package manager)
+- npm or yarn
+- Wristband account and configuration
+
+## Prerequisite Installation
+
+### Python 3.11+
+#### macOS
+```bash
+brew install python@3.11
+```
+
+#### Ubuntu/Debian
+```bash
+sudo apt update
+sudo apt install python3.11 python3.11-venv python3-pip
+```
+
+#### Windows
+Download and install from [python.org](https://www.python.org/downloads/)
+
+### Node.js 16+
+#### macOS
+```bash
+brew install node
+```
+
+#### Ubuntu/Debian
+```bash
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install nodejs
+```
+
+#### Windows
+Download and install from [nodejs.org](https://nodejs.org/)
+
+### Poetry
+```bash
+curl -sSL https://install.python-poetry.org | python3 -
+```
+or
+```bash
+pip install poetry
+```
 
 ## Authentication Flow
 

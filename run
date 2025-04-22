@@ -106,9 +106,24 @@ case $CHOICE in
     echo -e "${YELLOW}Starting backend in a new terminal window...${NC}"
     
     if [[ "$OSTYPE" == "darwin"* ]]; then
-      # macOS - using osascript directly
+      # macOS - using a temporary file approach instead
       echo -e "${YELLOW}Opening new terminal window for backend...${NC}"
-      osascript -e "tell application \"Terminal\" to do script \"$BACKEND_CMD\""
+      # Create temporary script file
+      TEMP_SCRIPT=$(mktemp /tmp/backend-start.XXXXXX.sh)
+      echo "#!/bin/bash" > "$TEMP_SCRIPT"
+      echo "cd \"$(pwd)/backend\"" >> "$TEMP_SCRIPT"
+      echo "echo \"Installing backend dependencies...\"" >> "$TEMP_SCRIPT"
+      echo "poetry install" >> "$TEMP_SCRIPT"
+      echo "echo \"Starting backend server...\"" >> "$TEMP_SCRIPT"
+      if [ -n "$ENV_PATH" ]; then
+        echo "PYTHON_DOTENV_FILE=\"$ENV_PATH\" poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload" >> "$TEMP_SCRIPT"
+      else
+        echo "poetry run uvicorn app:app --host 0.0.0.0 --port 8080 --reload" >> "$TEMP_SCRIPT"
+      fi
+      chmod +x "$TEMP_SCRIPT"
+      
+      # Run the script in a new terminal
+      osascript -e "tell application \"Terminal\" to do script \"$TEMP_SCRIPT\""
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
       # Linux
       if command_exists gnome-terminal; then
