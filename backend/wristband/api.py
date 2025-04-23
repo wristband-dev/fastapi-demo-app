@@ -12,7 +12,7 @@ class WristbandError(Exception):
         super().__init__(f"{error_code}: {error_description}")
 
 
-class WristbandService:
+class Api:
     def __init__(self, wristband_application_domain: str, client_id: str, client_secret: str) -> None:
         credentials: str = f"{client_id}:{client_secret}"
         encoded_credentials: str = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')

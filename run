@@ -27,6 +27,7 @@ REDIRECT_URI=https://localhost:8080/api/auth/callback
 APP_HOME_URL=http://localhost:3000
 SESSION_COOKIE_SECRET=your_secure_random_string
 SCOPES=['openid', 'offline_access', 'email']
+LOG_LEVEL=DEBUG
 EOL
   echo -e "${YELLOW}Example .env file created at ./.env.example${NC}"
   echo -e "${YELLOW}Please rename it to .env and update with your actual values${NC}"

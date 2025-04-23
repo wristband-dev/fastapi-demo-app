@@ -6,7 +6,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-
 load_dotenv()
 
 from wristband.models import AuthConfig
@@ -15,15 +14,15 @@ from src.api import auth_route
 from wristband.utils import to_bool
 
 def create_app() -> FastAPI:
-    
     # Initialize the FastAPI app
     app = FastAPI()
 
     # SETUP LOGGING
+    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
     root_logger: logging.Logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(getattr(logging, log_level))
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
+    console_handler.setLevel(getattr(logging, log_level))
     formatter = logging.Formatter("[%(asctime)s] %(levelname)s in %(name)s: %(message)s")
     console_handler.setFormatter(formatter)
 

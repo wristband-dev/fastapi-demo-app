@@ -17,7 +17,7 @@ from starlette.datastructures import MutableHeaders
 logger: logging.Logger = logging.getLogger(__name__)
 
 from wristband.models import TokenData, TokenResponse
-from wristband.api import WristbandError, WristbandService
+from wristband.api import WristbandError, Api
 from wristband.enums import CallbackResultType
 from wristband.models import (
     CallbackData,
@@ -61,7 +61,7 @@ class Auth:
         self.use_tenant_subdomains: bool = auth_config.use_tenant_subdomains
         # TODO - validation on auth config fields
 
-        self.api = WristbandService(
+        self.api = Api(
             wristband_application_domain=self.wristband_application_domain,
             client_id=self.client_id,
             client_secret=self.client_secret,
@@ -545,7 +545,6 @@ class Auth:
             f"{self._cookie_prefix}{state}{self._login_state_cookie_separator}{str(int(1000 * time.time()))}"
         )
 
-        logging.info(f"Secure ? : {not disable_secure}")
         res.set_cookie(
             key=cookie_name,
             value=encrypted_str,

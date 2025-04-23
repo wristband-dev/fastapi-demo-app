@@ -1,6 +1,7 @@
 import os
 from typing import Any, Optional, List
 import json
+import logging
 from fastapi import APIRouter, Request, status
 from fastapi import Request
 from fastapi.routing import APIRouter
@@ -15,6 +16,12 @@ from wristband.models import CallbackResult, LogoutConfig, SessionData
 from wristband.auth import Auth
 from wristband.utils import CookieEncryptor
 from src.api.auth_middleware import SessionAuthMiddleware
+from src.api.constants import PUBLIC_PATHS
+
+# Configure logger
+logger = logging.getLogger(__name__)
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(level=LOG_LEVEL)
 
 router = APIRouter()
 app = FastAPI()
@@ -22,14 +29,6 @@ app = FastAPI()
 @app.middleware("http")
 async def debug_request_middleware(request: Request, call_next):
     return await debug_request(request, call_next)
-
-# Public paths that don't require authentication
-PUBLIC_PATHS: List[str] = [
-    "/api/auth/login",
-    "/api/auth/callback",
-    "/api/auth/logout",
-    "/api/auth/test_decrypt_cookie"
-]
 
 # Add the session middleware to the app
 app.add_middleware(SessionAuthMiddleware)
@@ -45,13 +44,16 @@ app.add_middleware(
 
 @router.route('/session', methods=['GET', 'POST'])
 def session(request: Request) -> Response | Any:
+    logger.debug("Session endpoint called")
     session_secret_cookie: Optional[str] = os.getenv("SESSION_COOKIE_SECRET")
     if session_secret_cookie is None:
+        logger.error("Missing required environment variable: SESSION_COOKIE_SECRET")
         raise ValueError("Missing required environment variable: SESSION_COOKIE_SECRET")
 
     # Get the session cookie
     session: Optional[str] = request.cookies.get("session")
     if session is None:
+        logger.warning("No session cookie found in request")
         return JSONResponse(
             status_code=status.HTTP_401_UNAUTHORIZED,
             content={"detail": "No session found"}
@@ -59,18 +61,22 @@ def session(request: Request) -> Response | Any:
 
     try:
         # Decrypt the session cookie
+        logger.debug("Attempting to decrypt session cookie")
         session_data_dict = CookieEncryptor(session_secret_cookie).decrypt(session)
         session_data = SessionData.from_dict(session_data_dict)
+        logger.debug("Session cookie decrypted successfully")
         
         # Check if we need to refresh the token
         auth: Auth = request.app.state.auth
         if auth.is_expired(session_data.expires_at) and session_data.refresh_token:
+            logger.info("Token is expired, attempting to refresh")
             new_token_data = auth.refresh_token_if_expired(
                 session_data.refresh_token, 
                 session_data.expires_at
             )
             
             if new_token_data:
+                logger.info("Token refreshed successfully")
                 # Update session with new token data
                 session_data.access_token = new_token_data.access_token
                 session_data.refresh_token = new_token_data.refresh_token
@@ -92,13 +98,17 @@ def session(request: Request) -> Response | Any:
                     httponly=True,
                     samesite="lax"
                 )
+                logger.debug("Updated session cookie with refreshed token")
                 
                 return response
+            else:
+                logger.warning("Token refresh failed")
         
         # Return the session data
+        logger.debug("Returning session data to client")
         return JSONResponse(content=session_data.to_session_init_data())
     except Exception as e:
-        print(f"Session endpoint error: {str(e)}")
+        logger.exception(f"Session endpoint error: {str(e)}")
         return JSONResponse(
             status_code=status.HTTP_401_UNAUTHORIZED,
             content={"detail": f"Session error: {str(e)}"}
