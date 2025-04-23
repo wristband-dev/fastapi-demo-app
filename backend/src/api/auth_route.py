@@ -168,7 +168,7 @@ def logout(request: Request) -> Response | Any:
     secure: bool = not to_bool(os.getenv("DANGEROUSLY_DISABLE_SECURE_COOKIES", "False"))
 
     # Get the auth service from the current app
-    service: Auth = request.app.state.auth
+    auth: Auth = request.app.state.auth
 
     # Get the session from the request
     session: Optional[str] = request.cookies.get("session")
@@ -179,11 +179,11 @@ def logout(request: Request) -> Response | Any:
     session_data: dict[str, Any] = CookieEncryptor(session_secret_cookie).decrypt(session)
 
     # Logout the user
-    resp: Response = service.logout(
+    resp: Response = auth.logout(
         req=request,
         config=LogoutConfig(
             refresh_token=session_data.get("refresh_token"),
-            redirect_uri=os.getenv("REDIRECT_URI", ""), # up to developer to set
+            redirect_uri=os.getenv("APP_HOME_URL", ""), # up to developer to set
             tenant_custom_domain=session_data.get("tenant_custom_domain"),
             tenant_domain_name=session_data.get("tenant_domain_name")
         )

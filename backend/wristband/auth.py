@@ -321,7 +321,6 @@ class Auth:
         tenant_domain_name: Optional[str] = (
             config.tenant_domain_name if config else None
         )
-        redirect_url: Optional[str] = config.redirect_uri if config else None
 
         # Construct app login URL
         app_login_url: str = (
@@ -334,12 +333,12 @@ class Auth:
             host_root_domain: str = host.split(".")[-1]
             if self.use_tenant_subdomains and not host_root_domain == self.root_domain:
                 res.headers["Location"] = (
-                    redirect_url or f"{app_login_url}?client_id={self.client_id}"
+                    f"{app_login_url}?client_id={self.client_id}"
                 )
                 return res
             if not self.use_tenant_subdomains and not tenant_domain_name:
                 res.headers["Location"] = (
-                    redirect_url or f"{app_login_url}?client_id={self.client_id}"
+                    f"{app_login_url}?client_id={self.client_id}"
                 )
                 return res
 
