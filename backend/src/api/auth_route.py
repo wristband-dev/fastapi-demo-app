@@ -183,7 +183,7 @@ def logout(request: Request) -> Response | Any:
         req=request,
         config=LogoutConfig(
             refresh_token=session_data.get("refresh_token"),
-            redirect_uri=os.getenv("APP_HOME_URL", ""), # up to developer to set
+            redirect_url=os.getenv("APP_HOME_URL", ""), # up to developer to set
             tenant_custom_domain=session_data.get("tenant_custom_domain"),
             tenant_domain_name=session_data.get("tenant_domain_name")
         )

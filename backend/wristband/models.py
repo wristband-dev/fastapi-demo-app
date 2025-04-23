@@ -17,7 +17,7 @@ class LoginConfig:
 
 @dataclass
 class LogoutConfig:
-    redirect_uri: Optional[str] = None
+    redirect_url: Optional[str] = None
     refresh_token: Optional[str] = None
     tenant_custom_domain: Optional[str] = None
     tenant_domain_name: Optional[str] = None

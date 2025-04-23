@@ -7,7 +7,7 @@ const JSON_MEDIA_TYPE = 'application/json;charset=UTF-8';
 const defaultOptions = {
   // Set up baseURL based on whether this is server-side or client-side
   // baseURL: typeof window !== 'undefined' ? `${window.location.origin}/api/v1` : undefined,
-  baseURL: 'http://localhost:8080/api/v1',
+  baseURL: 'http://localhost:8080/api',
   headers: { 'Content-Type': JSON_MEDIA_TYPE, Accept: JSON_MEDIA_TYPE }
 };
 

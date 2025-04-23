@@ -308,8 +308,8 @@ class Auth:
         query_params: dict[str, str] = {
             "client_id": self.client_id,
         }
-        if config and config.redirect_uri:
-            query_params["redirect_uri"] = config.redirect_uri
+        if config and config.redirect_url:
+            query_params["redirect_url"] = config.redirect_url
 
         query_string: str = urlencode({k: v for k, v in query_params.items() if v})
 

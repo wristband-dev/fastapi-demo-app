@@ -7,37 +7,62 @@ import { frontendApiService } from '@/services/frontend-api-service';
 const AuthContext = createContext({
   isAuthenticated: false,
   isLoading: true,
+  sessionData: null,
+  login: () => {},
+  logout: () => {},
+  refreshSession: () => Promise.resolve(),
 });
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
   // Auth Context State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [sessionData, setSessionData] = useState<any>(null);
+
+  const login = () => {
+    if (typeof window !== 'undefined') {
+      window.location.href = 'http://localhost:8080/api/auth/login';
+    }
+  };
+
+  const logout = () => {
+    if (typeof window !== 'undefined') {
+      // Clear session data locally
+      setSessionData(null);
+      setIsAuthenticated(false);
+      
+      // Redirect to logout endpoint
+      window.location.href = 'http://localhost:8080/api/auth/logout';
+    }
+  };
+
+  const refreshSession = async () => {
+    try {
+      const sessionData = await frontendApiService.getSession();
+      setSessionData(sessionData);
+      setIsAuthenticated(true);
+      setIsLoading(false);
+      return sessionData;
+    } catch (error: any) {
+      setIsLoading(false);
+      setIsAuthenticated(false);
+      setSessionData(null);
+      
+      if (isUnauthorizedError(error)) {
+        // If user is not authenticated, don't redirect automatically
+        return null;
+      }
+    }
+  };
 
   // Bootstrap the application with the authenticated user's session data.
   useEffect(() => {
     const fetchSession = async () => {
-      try {
-        /* WRISTBAND_TOUCHPOINT - AUTHENTICATION */
-        const sessionData = await frontendApiService.getSession();
-        const { isAuthenticated } = sessionData;
-
-        if (isAuthenticated) {
-          setIsAuthenticated(true);
-          setIsLoading(false);
-        } else {
-          redirectToLogout();
-        }
+      /* WRISTBAND_TOUCHPOINT - AUTHENTICATION */
+      const data = await refreshSession();
         
-      } catch (error: any) {
-        console.log(error);
-
-        if (isUnauthorizedError(error)) {
-          // We want to preserve the page route that the user lands on when they come back after re-authentication.
-          redirectToLogin();
-        } else {
-          redirectToLogout();
-        }
+      if (!data) {
+        setIsLoading(false);
       }
     };
 
@@ -46,7 +71,14 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, isLoading }}
+      value={{ 
+        isAuthenticated, 
+        isLoading, 
+        sessionData,
+        login,
+        logout,
+        refreshSession
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Geist, Geist_Mono } from "next/font/google";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useState } from "react";
+import { useWristband } from "@/context/auth-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,58 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export default function Home() {
-
   const [response, setResponse] = useState<string | null>(null);
   const [logoutMessage, setLogoutMessage] = useState<string | null>(null);
-  const [sessionData, setSessionData] = useState<any>(null);
-  const [sessionLoading, setSessionLoading] = useState(true);
+  const { isAuthenticated, isLoading, sessionData, login, logout, refreshSession } = useWristband();
   const [cookies, setCookies] = useState<string>("");
-  const router = useRouter();
-
-  useEffect(() => {
-    // Display cookies for debugging
-    setCookies(document.cookie);
-
-    const fetchSessionData = async () => {
-      try {
-        console.log("Fetching session data...");
-        const res = await fetch("http://localhost:8080/api/auth/session", {
-          method: "GET",
-          credentials: "include", // Include cookies in the request
-          headers: {
-            "Accept": "application/json",
-          }
-        });
-
-        console.log("Session response status:", res.status);
-        console.log("Session response headers:", Object.fromEntries([...res.headers.entries()]));
-
-        if (!res.ok) {
-          const errorText = await res.text();
-          console.error(`Failed to fetch session data: ${res.status}`, errorText);
-          setSessionLoading(false);
-          return;
-        }
-
-        try {
-          const data = await res.json();
-          console.log("Session data received:", data);
-          setSessionData(data);
-        } catch (jsonError) {
-          console.error("Error parsing session response as JSON:", jsonError);
-          const text = await res.text();
-          console.log("Raw response:", text);
-          setResponse(`Error parsing session data: ${text}`);
-        }
-      } catch (error) {
-        console.error("Error fetching session data:", error);
-      } finally {
-        setSessionLoading(false);
-      }
-    };
-
-    fetchSessionData();
-  }, []);
 
   const handleTestDecryptCookie = async () => {
     try {
@@ -88,26 +40,9 @@ export default function Home() {
 
   const handleTestSession = async () => {
     try {
-      console.log("Testing session endpoint...");
-      const res = await fetch("http://localhost:8080/api/auth/session", {
-        method: "GET",
-        credentials: "include", // Include cookies in the request
-      });
-
-      console.log("Session test status:", res.status);
-      console.log("Session test headers:", Object.fromEntries([...res.headers.entries()]));
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error(`Session test failed: ${res.status}`, errorText);
-        setResponse(`Session test failed: ${res.status} - ${errorText}`);
-        return;
-      }
-
-      const data = await res.json();
-      console.log("Session test data:", data);
+      console.log("Testing session refresh...");
+      const data = await refreshSession();
       setResponse(`Session test response: ${JSON.stringify(data)}`);
-      setSessionData(data);
     } catch (error) {
       console.error("Error testing session:", error);
       setResponse(`Error testing session: ${error}`);
@@ -115,28 +50,12 @@ export default function Home() {
   };
 
   const handleLogout = () => {
-    if (!!window) {
-      console.log("Initiating logout process...");
-      
-      // Clear session data locally
-      setSessionData(null);
-      
-      // Display logout message
-      setLogoutMessage("Logging out...");
-      
-      // Log cookies before logout
-      console.log("Cookies before logout:", document.cookie);
-      
-      // Redirect to logout endpoint
-      console.log("Redirecting to logout endpoint");
-      window.location.href = 'http://localhost:8080/api/auth/logout';
-    }
+    setLogoutMessage("Logging out...");
+    logout();
   };
 
   const handleLogin = () => {
-    if (!!window) {
-      window.location.href = 'http://localhost:8080/api/auth/login';
-    }
+    login();
   };
 
   return (
@@ -158,9 +77,9 @@ export default function Home() {
             <p>{logoutMessage}</p>
           </div>
         )}
-        {sessionLoading ? (
+        {isLoading ? (
           <p>Loading session...</p>
-        ) : sessionData ? (
+        ) : isAuthenticated && sessionData ? (
           <div className="p-4 bg-green-100 dark:bg-green-900 rounded w-full">
             <p className="font-bold mb-2">Session active:</p>
             <div className="bg-white dark:bg-gray-800 p-2 rounded max-h-40 overflow-auto">
@@ -170,7 +89,7 @@ export default function Home() {
         ) : (
           <div className="p-4 bg-yellow-100 dark:bg-yellow-900 rounded w-full">
             <p>No active session</p>
-            <p className="mt-2 text-xs">Cookies: {cookies}</p>
+            <p className="mt-2 text-xs">Cookies: {document?.cookie || ""}</p>
           </div>
         )}
 
@@ -212,7 +131,7 @@ export default function Home() {
             </div>
           )}
         </div>
-        {!sessionData && (
+        {!isAuthenticated && (
           <div className="flex flex-col gap-2 w-full">
             <button
               onClick={handleLogin}
@@ -222,7 +141,7 @@ export default function Home() {
             </button>
           </div>
         )}
-        {sessionData && (
+        {isAuthenticated && (
           <div className="flex flex-col gap-2 w-full">
             <button
               onClick={handleLogout}
