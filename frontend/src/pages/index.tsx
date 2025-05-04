@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { useState } from "react";
 import { useWristband } from "@/context/auth-context";
 import TransactionPortal from "@/components/TransactionPortal";
+import WristbandTestComponents from "@/components/WristbandTestComponents";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,41 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export default function Home() {
-  const [response, setResponse] = useState<string | null>(null);
   const [logoutMessage, setLogoutMessage] = useState<string | null>(null);
-  const { isAuthenticated, isLoading, sessionData, login, logout, refreshSession } = useWristband();
+  const { isAuthenticated, isLoading, sessionData, login, logout } = useWristband();
   const [cookies, setCookies] = useState<string>("");
-  const [showTransactions, setShowTransactions] = useState(false);
-
-  const handleTestDecryptCookie = async () => {
-    try {
-      const res = await fetch("http://localhost:8080/api/auth/test_decrypt_cookie", {
-        method: "GET",
-        credentials: "include", // Include cookies in the request
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch");
-      }
-
-      const data = await res.text();
-      setResponse(data);
-    } catch (error) {
-      console.error("Error:", error);
-      setResponse("Error fetching data");
-    }
-  };
-
-  const handleTestSession = async () => {
-    try {
-      console.log("Testing session refresh...");
-      const data = await refreshSession();
-      setResponse(`Session test response: ${JSON.stringify(data)}`);
-    } catch (error) {
-      console.error("Error testing session:", error);
-      setResponse(`Error testing session: ${error}`);
-    }
-  };
 
   const handleLogout = () => {
     setLogoutMessage("Logging out...");
@@ -95,44 +64,6 @@ export default function Home() {
           </div>
         )}
 
-        <div className="flex flex-col gap-2 w-full">
-          <button
-            onClick={handleTestDecryptCookie}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Test Decrypt Cookie
-          </button>
-          <button
-            onClick={handleTestSession}
-            className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 mt-2"
-          >
-            Test Session
-          </button>
-          {response && (
-            <div className="mt-4 rounded border border-gray-300 dark:border-gray-700">
-              <div className="bg-gray-100 dark:bg-gray-800 p-2 border-b border-gray-300 dark:border-gray-700">
-                <p className="font-bold text-sm">Response:</p>
-              </div>
-              <div className="p-2 max-h-60 overflow-auto">
-                <pre className="text-xs whitespace-pre-wrap break-all">{
-                  (() => {
-                    try {
-                      if (typeof response === 'string') {
-                        // Try to parse as JSON first
-                        const parsed = JSON.parse(response);
-                        return JSON.stringify(parsed, null, 2);
-                      }
-                      return JSON.stringify(response, null, 2);
-                    } catch (e) {
-                      // If not valid JSON, just show as string
-                      return response;
-                    }
-                  })()
-                }</pre>
-              </div>
-            </div>
-          )}
-        </div>
         {!isAuthenticated && (
           <div className="flex flex-col gap-2 w-full">
             <button
@@ -145,14 +76,11 @@ export default function Home() {
         )}
         {isAuthenticated && (
           <div className="flex flex-col gap-2 w-full">
-            <button
-              onClick={() => setShowTransactions(!showTransactions)}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              {showTransactions ? "Hide Transactions" : "Manage Transactions"}
-            </button>
+            <h2 className="font-bold text-lg mt-2 mb-1">Wristband API Tests</h2>
+            <WristbandTestComponents />
             
-            {showTransactions && <TransactionPortal />}
+            <h2 className="font-bold text-lg mt-6 mb-1">Transaction Management (Firestore)</h2>
+            <TransactionPortal />
             
             <button
               onClick={handleLogout}

@@ -17,6 +17,14 @@ interface TransactionFormData {
   description: string;
 }
 
+// Helper function to format currency
+const formatCurrency = (amount: number): string => {
+  return amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
 export default function TransactionPortal() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -60,7 +68,14 @@ export default function TransactionPortal() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    if (name === "amount") {
+      // Strip any non-numeric characters except decimal point
+      const numericValue = value.replace(/[^0-9.]/g, '');
+      setFormData((prev) => ({ ...prev, [name]: numericValue }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const resetForm = () => {
@@ -183,7 +198,6 @@ export default function TransactionPortal() {
   return (
     <div className="w-full max-w-2xl mx-auto">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Transactions</h2>
         <button
           onClick={() => {
             resetForm();
@@ -222,16 +236,19 @@ export default function TransactionPortal() {
               <label htmlFor="amount" className="block text-sm font-medium mb-1">
                 Amount*
               </label>
-              <input
-                type="number"
-                id="amount"
-                name="amount"
-                value={formData.amount}
-                onChange={handleInputChange}
-                step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded dark:bg-gray-700"
-                required
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-2">$</span>
+                <input
+                  type="text"
+                  id="amount"
+                  name="amount"
+                  value={formData.amount}
+                  onChange={handleInputChange}
+                  className="w-full pl-6 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded dark:bg-gray-700"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
             </div>
             <div>
               <label htmlFor="date" className="block text-sm font-medium mb-1">
@@ -302,7 +319,7 @@ export default function TransactionPortal() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    ${transaction.amount.toFixed(2)}
+                    ${formatCurrency(transaction.amount)}
                   </td>
                   <td className="px-4 py-3">
                     {new Date(transaction.date).toLocaleDateString()}

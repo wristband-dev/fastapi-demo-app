@@ -7,14 +7,13 @@ from datetime import datetime
 from google.cloud.firestore_v1.base_document import DocumentSnapshot
 from google.cloud.firestore_v1.client import Client
 from google.cloud.firestore_v1.stream_generator import StreamGenerator
-from nbformat import Sentinel
 from pydantic import BaseModel, Field
 
 # Wristband imports
 from wristband.utils import get_logger
 
 # Local imports
-from src.db import add_document, get_document, get_server_timestamp, update_document, delete_document, get_db, update_field
+from src.db import add_document, get_document, get_server_timestamp, query_documents, update_document, delete_document, update_field
 
 # Configure logger
 logger: logging.Logger = get_logger()
@@ -43,6 +42,12 @@ class Transaction(BaseModel):
 
 class Transactions(BaseModel):
     transactions: List[Transaction] = Field(default_factory=list)
+
+    @classmethod
+    def from_db(cls, docs: list[dict]) -> "Transactions":
+        return cls(transactions=[
+            Transaction(**doc) for doc in docs
+        ])
 
 class DeleteResponse(BaseModel):
     message: str
@@ -75,17 +80,9 @@ async def get_transactions() -> Transactions:
     """Get all transactions"""
     logger.debug("Getting all transactions")
     
-    # Query all documents in the transactions collection
-    db: Client = get_db()
-    transactions_ref: StreamGenerator[DocumentSnapshot] = db.collection(TRANSACTION_COLLECTION).stream()
-    transactions: List[Transaction] = []
+    transactions: list[dict] = query_documents(TRANSACTION_COLLECTION)
     
-    for doc in transactions_ref:
-        transaction_data: Dict[str, Any] = doc.to_dict()
-        transaction_data["id"] = doc.id  # Add document ID to the transaction
-        transactions.append(Transaction(**transaction_data))
-    
-    return Transactions(transactions=transactions)
+    return Transactions.from_db(transactions)
 
 
 @router.get("/{transaction_id}", response_model=Transaction)

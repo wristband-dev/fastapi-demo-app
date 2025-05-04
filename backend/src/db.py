@@ -4,6 +4,7 @@ import firebase_admin
 from firebase_admin import firestore
 from google.cloud.firestore_v1.base_document import DocumentSnapshot
 from google.cloud.firestore_v1.client import Client
+from google.cloud.firestore_v1.collection import CollectionReference
 from google.cloud.firestore_v1.document import DocumentReference
 
 
@@ -88,12 +89,23 @@ def delete_document(collection_name: str, doc_id: str) -> None:
     db.collection(collection_name).document(doc_id).delete()
     logger.info(f"Document {doc_id} deleted")
 
-def query_documents(collection_name: str, field: str, operator: str, value: str) -> list[tuple[str, dict]]:
+def query_documents(
+        collection_name: str, 
+        field: str | None = None, 
+        operator: str | None = None, 
+        value: str | None = None
+    ) -> list[dict]:
     """Query documents in a collection."""
     db: Client = get_db()
-    docs: StreamGenerator[DocumentSnapshot] = db.collection(collection_name).where(field, operator, value).stream()
-    results: list[tuple[str, dict]] = []
-    for doc in docs:
+    collection_ref = db.collection(collection_name)
+    query = collection_ref
+
+    if field and operator and value:
+        query = collection_ref.where(field, operator, value)
+
+    results: list[dict] = []
+
+    for doc in query.stream():
         logger.info(f"Document ID: {doc.id}, Data: {doc.to_dict()}")
-        results.append((doc.id, doc.to_dict()))
+        results.append((doc.to_dict()))
     return results
