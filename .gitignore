@@ -12,6 +12,7 @@ frontend/.yarn/patches
 frontend/.yarn/plugins
 frontend/.yarn/releases
 frontend/.yarn/versions
+frontend/.next
 
 # testing
 frontend/coverage
@@ -42,3 +43,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+frontend/.next/trace
