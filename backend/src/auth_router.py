@@ -20,9 +20,11 @@ logger: logging.Logger = get_logger()
 # Initialize router
 router = APIRouter()
 
+# TODO - clean up session logic
 @router.route('/session', methods=['GET', 'POST'])
 def session(request: Request) -> Response | Any:
     logger.debug("Session endpoint called")
+
     session_secret_cookie: Optional[str] = os.getenv("SESSION_COOKIE_SECRET")
     if session_secret_cookie is None:
         logger.error("Missing required environment variable: SESSION_COOKIE_SECRET")
@@ -94,35 +96,50 @@ def session(request: Request) -> Response | Any:
 
 @router.route('/login', methods=['GET', 'POST'])
 def login(request: Request) -> Response | Any:
-    service: Auth = request.app.state.auth    
-    resp: Response = service.login(req=request)
+
+    # init auth service
+    auth: Auth = request.app.state.auth    
+
+    # get login response
+    resp: Response = auth.login(req=request)
+
+    # return response
     return resp
 
 @router.route('/callback', methods=['GET', 'POST'])
 def callback(request: Request) -> Response | Any:
 
-    service: Auth = request.app.state.auth
-    callback_result: CallbackResult = service.callback(req=request)
+    # init auth service
+    auth: Auth = request.app.state.auth
 
+    # get callback result
+    callback_result: CallbackResult = auth.callback(req=request)
+
+    # if redirect required, return redirect response
     if callback_result.type == CallbackResultType.REDIRECT_REQUIRED and callback_result.redirect_response:
         return callback_result.redirect_response
     
+    # get app home url
     app_home_url: str | None = os.getenv("APP_HOME_URL")
     if app_home_url is None:
         raise ValueError("Missing required environment variable: APP_HOME_URL")
-    
 
-    resp: Response = service._create_callback_response(request, app_home_url)
+    # create callback response
+    resp: Response = auth._create_callback_response(request, app_home_url)
 
+    # get session secret cookie
     session_secret_cookie: Optional[str] = os.getenv("SESSION_COOKIE_SECRET")
     if session_secret_cookie is None:
         raise ValueError("Missing required environment variable: SESSION_COOKIE_SECRET")
     
+    # if callback data is missing, raise error
     if callback_result.callback_data is None:
         raise ValueError("Missing callback data")
 
+    # get secure flag
     secure: bool = not to_bool(os.getenv("DANGEROUSLY_DISABLE_SECURE_COOKIES", "False"))
 
+    # set session cookie
     resp.set_cookie(
         key="session",
         value=CookieEncryptor(session_secret_cookie).encrypt(
@@ -132,7 +149,8 @@ def callback(request: Request) -> Response | Any:
         httponly=True,
         samesite="lax"
     )
-    
+
+    # return response
     return resp
 
 @router.route('/logout', methods=['GET', 'POST'])

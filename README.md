@@ -92,7 +92,17 @@ TODO ADD DOCS ABOUT EMULATOR VS HOSTING
 
 TODO - OR just get from export file
 
-### 4. Install Local Packages
+### 6. Setup Firebase CLI
+1. Install Firebase CLI
+   ```base
+   npm install -g firebase-tools
+   ```
+2. Login to Firebase CLI
+   ```base
+   firebase login
+   ```
+
+### 5. Install Local Packages
 
 #### Backend Setup 🐍
 
@@ -125,14 +135,13 @@ npm install
 
 
 
-
-
 ## Local Start Up
 
 1. Start Backend
    ```
    cd backend
    python3 run.py
+   firebase emulators:start --only firestore --port 8090
    ```
 
 
@@ -142,3 +151,10 @@ npm install
    npm run dev
    ```
 
+
+
+
+## Deployment
+   1. Publish Fast Api app to google cloud run
+
+   2. Host firestore database in firebase

@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 # Wristband imports 
+from src import transaction_router
 from wristband.models import AuthConfig
 from wristband.auth import Auth
 from wristband.utils import to_bool, debug_request
@@ -107,6 +108,7 @@ def create_app() -> FastAPI:
 
     # Include routers
     app.include_router(auth_router.router, prefix='/api/auth')
+    app.include_router(transaction_router.router, prefix='/api/transaction')
     
     return app
 
