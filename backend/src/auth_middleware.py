@@ -1,25 +1,30 @@
+# Standard library imports
 import os
 import logging
 from typing import Any, Optional, List
-from fastapi import Request, status
+from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
+# Wristband imports
 from wristband.models import SessionData
 from wristband.auth import Auth
-from wristband.utils import CookieEncryptor
-from wristband.utils import to_bool
-from src.api.constants import PUBLIC_PATHS
+from wristband.utils import CookieEncryptor, get_logger, to_bool
+
+# Local imports
+from src.constants import PUBLIC_PATHS
 
 # Configure logger
-logger = logging.getLogger(__name__)
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-logging.basicConfig(level=LOG_LEVEL)
+logger: logging.Logger = get_logger()
+
+
+# TODO: on logout throwing 401
 
 class SessionAuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next) -> Response | JSONResponse:
+
         # Skip authentication for public paths
-        path = request.url.path
+        path: str = request.url.path
         logger.debug(f"Processing request to path: {path}")
         
         if path in PUBLIC_PATHS or path.startswith("/static/"):
@@ -64,8 +69,10 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             auth: Auth = request.app.state.auth
             if auth.is_expired(session_data.expires_at):
                 logger.info("Access token is expired, attempting to refresh")
+
                 # Try to refresh the token if refresh token exists
                 if session_data.refresh_token:
+
                     # Refresh the token
                     logger.debug("Attempting to refresh token")
                     new_token_data = auth.refresh_token_if_expired(

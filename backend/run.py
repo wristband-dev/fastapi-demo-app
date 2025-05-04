@@ -1,3 +1,4 @@
+# Standard library imports
 import ast
 import logging
 import os
@@ -6,16 +7,20 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-load_dotenv()
-
+# Wristband imports 
 from wristband.models import AuthConfig
 from wristband.auth import Auth
 from wristband.utils import to_bool, debug_request
 
-from src.api import auth_route
-from src.api.auth_middleware import SessionAuthMiddleware
+# Local imports
+from src import auth_router
+from src.auth_middleware import SessionAuthMiddleware
+
+# Load environment variables
+load_dotenv()
 
 def create_app() -> FastAPI:
+
     # Initialize the FastAPI app
     app = FastAPI()
 
@@ -101,7 +106,7 @@ def create_app() -> FastAPI:
     app.state.auth = auth
 
     # Include routers
-    app.include_router(auth_route.router, prefix='/api/auth')
+    app.include_router(auth_router.router, prefix='/api/auth')
     
     return app
 
@@ -109,4 +114,4 @@ def create_app() -> FastAPI:
 app: FastAPI = create_app()
 
 if __name__ == '__main__':
-    uvicorn.run("app:app", host='0.0.0.0', port=8080, reload=True)
+    uvicorn.run("run:app", host='0.0.0.0', port=8080, reload=True)

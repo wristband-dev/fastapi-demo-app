@@ -1,6 +1,8 @@
-- redirect url option in env
-- logos
-- go thru repo and clean up code
+logos
 
-little tasks
+backend
+- go thru auth_middleware and session endpoint
+- add tests
+
+frontend
 - replace localhost8080 hard code

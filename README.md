@@ -132,7 +132,7 @@ npm install
 1. Start Backend
    ```
    cd backend
-   python3 app.py
+   python3 run.py
    ```
 
 
