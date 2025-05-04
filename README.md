@@ -162,3 +162,5 @@ npm install
    1. Publish Fast Api app to google cloud run
 
    2. Host firestore database in firebase
+
+   3. Publish the frontend (next js) to vercel
