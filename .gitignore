@@ -4,24 +4,24 @@ __pycache__
 .cursor
 
 # dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+frontend/node_modules
+frontend/.pnp
+frontend/.pnp.*
+frontend/.yarn/*
+frontend/.yarn/patches
+frontend/.yarn/plugins
+frontend/.yarn/releases
+frontend/.yarn/versions
 
 # testing
-/coverage
+frontend/coverage
 
 # next.js
-/.next/
-/out/
+frontend/.next/
+frontend/out/
 
 # production
-/build
+frontend/build
 
 # misc
 .DS_Store
