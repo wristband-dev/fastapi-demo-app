@@ -217,6 +217,5 @@ def test_decrypt_cookie(request: Request) -> TestDecryptCookieResponse:
         return TestDecryptCookieResponse(decrypted_cookie={})
 
     decrypted_cookie = CookieEncryptor(session_secret_cookie).decrypt(cookie_value)
-    print(f"Decrypted cookie: {decrypted_cookie}")
     
     return TestDecryptCookieResponse(decrypted_cookie=decrypted_cookie)
