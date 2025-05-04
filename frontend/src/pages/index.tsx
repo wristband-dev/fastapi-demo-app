@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Geist, Geist_Mono } from "next/font/google";
 import { useState } from "react";
 import { useWristband } from "@/context/auth-context";
+import TransactionPortal from "@/components/TransactionPortal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,6 +19,7 @@ export default function Home() {
   const [logoutMessage, setLogoutMessage] = useState<string | null>(null);
   const { isAuthenticated, isLoading, sessionData, login, logout, refreshSession } = useWristband();
   const [cookies, setCookies] = useState<string>("");
+  const [showTransactions, setShowTransactions] = useState(false);
 
   const handleTestDecryptCookie = async () => {
     try {
@@ -65,7 +67,7 @@ export default function Home() {
       <main className="flex flex-col gap-8 row-start-2 items-center w-full max-w-2xl">
         <div className="flex items-center">
           <Image
-            src="/wristband_logo.svg"
+            src="/wristband_logo_dark.svg"
             alt="Wristband Logo"
             width={180}
             height={38}
@@ -144,8 +146,17 @@ export default function Home() {
         {isAuthenticated && (
           <div className="flex flex-col gap-2 w-full">
             <button
+              onClick={() => setShowTransactions(!showTransactions)}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              {showTransactions ? "Hide Transactions" : "Manage Transactions"}
+            </button>
+            
+            {showTransactions && <TransactionPortal />}
+            
+            <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 mt-4"
             >
               Logout
             </button>

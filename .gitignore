@@ -3,6 +3,7 @@ __pycache__
 *.DS_Store
 .cursor
 
+
 backend/firebase-debug.log
 backend/firestore-debug.log
 
