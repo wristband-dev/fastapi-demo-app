@@ -1,0 +1,7 @@
+project:
+    label: "Wristband FastAPI App Demo"
+    id: "wb-python-fastapi-accelerator"
+    description: "A fastapi accelerator for wristband"
+github:
+    user: "fddiferd"
+    repo: "python-accelerator"

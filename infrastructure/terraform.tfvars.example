@@ -1,0 +1,32 @@
+# The GCP region to use
+gcp_region = "us-central1"
+
+# The GCP zone to use
+gcp_zone = "us-central1-a"
+
+# Set to true to only check if the project exists and if the user has access
+# Set to false to create the project if it doesn't exist
+check_only = false
+
+# Required only if creating a new project (check_only = false)
+# org_id = "your-organization-id"
+# billing_account = "your-billing-account" # Will use GCP_BILLING_ACCOUNT_ID env var if not set
+
+# The environment to deploy to
+environment = "staging" # For production environment, use "production"
+
+# The branch that triggers the deployment
+trigger_branch = "develop" # For staging; use "main" or "master" for production
+
+# The location for the Firestore database
+# Valid Firestore locations: nam5 (us-central1), eur3 (europe-west), etc.
+firestore_location = "nam5"
+
+# GitHub configuration is now read from project_config.yml
+# No need to set these variables manually
+
+# Optional: Docker image to deploy (if empty, will build from source)
+# image = "gcr.io/project-id/image-name:tag"
+
+# IMPORTANT: Before running terraform apply, set the GCP_BILLING_ACCOUNT_ID environment variable:
+# export GCP_BILLING_ACCOUNT_ID=XXXXXX-XXXXXX-XXXXXX

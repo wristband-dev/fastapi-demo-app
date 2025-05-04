@@ -48,3 +48,14 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 frontend/.next/trace
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraform.lock.hcl
+crash.log
+crash.*.log
+infrastructure/.terraform/
