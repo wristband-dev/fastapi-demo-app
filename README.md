@@ -1,28 +1,71 @@
+<div align="center">
+  <a href="https://wristband.dev">
+    <picture>
+      <img src="https://assets.wristband.dev/images/email_branding_logo_v1.png" alt="Github" width="297" height="64">
+    </picture>
+  </a>
+  <p align="center">
+    Enterprise-ready auth that is secure by default, truly multi-tenant, and ungated for small businesses.
+  </p>
+  <p align="center">
+    <b>
+      <a href="https://wristband.dev">Website</a> •
+      <a href="https://docs.wristband.dev">Documentation</a>
+    </b>
+  </p>
+</div>
+
+<br/>
+
+
 # Wristband Python FastAPI Accelerator
 
 A full-stack application accelerator showcasing Wristband authentication integration with a FastAPI backend and Next.js frontend. This repository provides a production-ready foundation for building secure, multi-tenant web applications with enterprise-grade authentication.
 
-## Overview
 
-This accelerator provides:
 
-- **FastAPI Backend**: A Python backend with Wristband authentication integration
-- **Next.js Frontend**: A modern React-based frontend with authentication context
-- **Multi-Tenant Support**: Full support for Wristband's multi-tenant capabilities
-- **OAuth 2.0 Flow**: Complete implementation of the OAuth 2.0 authentication flow
+
 
 ## Architecture
 
-The application follows a modern microservice architecture:
+- **FastAPI Backend**: A Python backend with Wristband authentication integration
+- **Next.js Frontend**: A modern React-based frontend with authentication context
+- **Firestore Database**: A NoSQL document database for storing application data with flexible schema support
+- **GCP Cloud Provider** (optional): Integration with Google Cloud Platform for hosting and additional services
 
-- **Frontend**: Next.js (React) application with authentication context
-- **Backend**: FastAPI server handling authentication and business logic
-- **Authentication**: Integration with Wristband for secure, multi-tenant authentication
+TODO ADD DOCS ABOUT EMULATOR VS HOSTING
 
 
-## Setup Instructions
 
-### Wristband Configuration
+
+
+
+## Setup
+
+### 1. Fork the Repository
+
+1. Click the "Fork" button at the top right of this GitHub repository.
+2. This will create a copy of the repository in your GitHub account.
+3. Clone your forked repository to your local machine:
+   ```bash
+   git clone https://github.com/wristband-dev/python-accelerator.git
+   cd wristband-python-fastapi-accelerator
+   ```
+
+4. (Optional) Keep your fork in sync with the original repository:
+   ```bash
+   # Add the original repository as a remote called "upstream"
+   git remote add upstream https://github.com/wristband-dev/python-accelerator.git
+   
+   # Fetch changes from the upstream repository
+   git fetch upstream
+   
+   # Merge changes from upstream into your local main branch
+   git checkout main
+   git merge upstream/main
+   ```
+
+### 2. Wristband Configuration
 
 1. Create an application in Wristband:
    - Configure Application Domain Name
@@ -34,23 +77,50 @@ The application follows a modern microservice architecture:
 
 3. Create a tenant in Wristband
 
-### Environment Variables
+### 3. Environment Variables
+1. Create environemnt varirable file
+   ```bash
+   cp .env.example .env
+   ```
+2. Add in the following required variables
+   ```
+   CLIENT_ID="CLIENT_ID"
+   CLIENT_SECRET="CLIENT_SECRET"
+   LOGIN_STATE_SECRET="LOGIN_STATE_SECRET"
+   WRISTBAND_APPLICATION_DOMAIN="WRISTBAND_APPLICATION_DOMAIN"
+   ```
 
-Create `.env` files in both frontend and backend directories with the following configurations:
+TODO - OR just get from export file
 
-#### Backend `.env` Variables:
-```
-CLIENT_ID=your_wristband_client_id
-CLIENT_SECRET=your_wristband_client_secret
-LOGIN_STATE_SECRET=your_secure_random_string
-LOGIN_URL=your_wristband_login_url
-REDIRECT_URI=https://localhost:8080/api/auth/callback
-APP_HOME_URL=http://localhost:3000
-SESSION_COOKIE_SECRET=your_secure_random_string
-SCOPES=['openid', 'offline_access', 'email']
-```
+### 4. Install Local Packages
+1. Install Python Packages 
+   ```
+   cd backend
+   ```
 
-### Backend Setup
+
+   1. Pip Installation
+   ```
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install -e .
+   ```
+
+   2. Poetry Installation (Optional)
+   ```
+   poetry install
+   ```
+2. Install Npm Packages
+
+
+
+
+
+
+
+
+
+## Local Start Up
 
 1. Navigate to the backend directory:
 ```
