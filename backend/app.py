@@ -2,7 +2,7 @@ import ast
 import logging
 import os
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -10,8 +10,10 @@ load_dotenv()
 
 from wristband.models import AuthConfig
 from wristband.auth import Auth
+from wristband.utils import to_bool, debug_request
+
 from src.api import auth_route
-from wristband.utils import to_bool
+from src.api.auth_middleware import SessionAuthMiddleware
 
 def create_app() -> FastAPI:
     # Initialize the FastAPI app
@@ -76,6 +78,15 @@ def create_app() -> FastAPI:
     origins: list[str] = [
         "*"
     ]
+
+    # Add the session middleware to the app
+    app.add_middleware(SessionAuthMiddleware)
+    
+    # Add debug request middleware only if log level is DEBUG
+    if log_level == "DEBUG":
+        @app.middleware("http")
+        async def debug_request_middleware(request: Request, call_next):
+            return await debug_request(request, call_next)
     
     # Add CORS middleware
     app.add_middleware(

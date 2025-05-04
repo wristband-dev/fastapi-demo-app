@@ -2,6 +2,9 @@ from fastapi import Request
 import json
 from cryptography.fernet import Fernet
 import base64
+import os
+import logging
+
 
 class CookieEncryptor:
     def __init__(self, secret_key=None):
@@ -68,3 +71,19 @@ async def debug_request(request: Request, call_next):
 def to_bool(env_val: str) -> bool:
         return env_val.strip().lower() in ["true", "1", "yes"]
 
+
+def get_logger(name: str = __name__) -> logging.Logger:
+    """
+    Returns a configured logger instance.
+    
+    Args:
+        name: The name for the logger, defaults to the module name
+        
+    Returns:
+        A configured logger instance
+    """
+    # Configure logger
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO").upper()
+    logging.basicConfig(level=LOG_LEVEL)
+
+    return logging.getLogger(name)

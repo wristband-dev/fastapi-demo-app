@@ -1,46 +1,24 @@
+# Standard library imports
 import os
-from typing import Any, Optional, List
-import json
+from typing import Any, Optional
 import logging
 from fastapi import APIRouter, Request, status
 from fastapi import Request
 from fastapi.routing import APIRouter
-from fastapi import FastAPI
 from fastapi.responses import Response, JSONResponse
 from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
 
-from wristband.utils import debug_request, to_bool
+# Wristband imports
 from wristband.enums import CallbackResultType
 from wristband.models import CallbackResult, LogoutConfig, SessionData
 from wristband.auth import Auth
-from wristband.utils import CookieEncryptor
-from src.api.auth_middleware import SessionAuthMiddleware
-from src.api.constants import PUBLIC_PATHS
+from wristband.utils import CookieEncryptor, get_logger, to_bool
 
 # Configure logger
-logger = logging.getLogger(__name__)
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-logging.basicConfig(level=LOG_LEVEL)
+logger: logging.Logger = get_logger()
 
+# Initialize router
 router = APIRouter()
-app = FastAPI()
-
-@app.middleware("http")
-async def debug_request_middleware(request: Request, call_next):
-    return await debug_request(request, call_next)
-
-# Add the session middleware to the app
-app.add_middleware(SessionAuthMiddleware)
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 @router.route('/session', methods=['GET', 'POST'])
 def session(request: Request) -> Response | Any:
