@@ -137,15 +137,19 @@ npm install
 
 ## Local Start Up
 
-1. Start Backend
+1. Start Backend Fast Api
    ```
    cd backend
    python3 run.py
-   firebase emulators:start --only firestore --port 8090
    ```
 
+2. Start Backend Database
+   ```
+   cd backend
+   firebase emulators:start --only firestore
+   ```
 
-2. Start Frontend
+3. Start Frontend
    ```
    cd frontend
    npm run dev
