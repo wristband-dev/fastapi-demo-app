@@ -92,17 +92,7 @@ TODO ADD DOCS ABOUT EMULATOR VS HOSTING
 
 TODO - OR just get from export file
 
-### 6. Setup Firebase CLI
-1. Install Firebase CLI
-   ```base
-   npm install -g firebase-tools
-   ```
-2. Login to Firebase CLI
-   ```base
-   firebase login
-   ```
-
-### 5. Install Local Packages
+### 4. Install Local Packages
 
 #### Backend Setup 🐍
 
@@ -118,6 +108,18 @@ pip install -e .
 # Option B: Poetry Installation (Optional)
 poetry install
 ```
+
+
+### 5. Setup Firebase CLI
+1. Install Firebase CLI
+   ```base
+   npm install -g firebase-tools
+   ```
+2. Login to Firebase CLI
+   ```base
+   firebase login
+   ```
+
 
 #### Frontend Setup 📦
 
