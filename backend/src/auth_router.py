@@ -66,7 +66,7 @@ def session(request: Request) -> Response | Any:
                 response = JSONResponse(content=session_data.to_session_init_data())
                 
                 # Update the session cookie
-                encrypted_session = CookieEncryptor(session_secret_cookie).encrypt(
+                encrypted_session: str = CookieEncryptor(session_secret_cookie).encrypt(
                     session_data.to_dict()
                 )
                 

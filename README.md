@@ -162,6 +162,16 @@ npm install
 
 ## Deployment
    1. Publish Fast Api app to google cloud run
+      - dockerize python env
+      - build
+      ```bash
+      docker build -t wristband-backend -f backend/Dockerfile .
+      ```
+      - run 
+      ```bash
+      docker run --env-file .env -p 8080:8080 wristband-backend
+      ```
+
 
    2. Host firestore database in firebase
 

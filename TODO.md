@@ -1,5 +1,7 @@
 logos
 
+- remove wristband folder from dockerfile
+
 backend
 - go thru auth_middleware and session endpoint
 - add tests

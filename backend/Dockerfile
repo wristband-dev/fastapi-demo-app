@@ -2,19 +2,13 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy requirements and install dependencies
-COPY pyproject.toml poetry.lock* /app/
-RUN pip install poetry && \
-    poetry config virtualenvs.create false && \
-    poetry install --no-dev
+# Copy requirements and application code
+COPY pyproject.toml run.py /app/
+COPY src/ /app/src/
+COPY wristband/ /app/wristband/
 
-# Copy application code
-COPY . /app/
-
-# Set environment variables
-ENV PORT=8080
-ENV HOST=0.0.0.0
-ENV ENV=staging
+# Install pip and dependencies
+RUN pip install .
 
 # Expose port
 EXPOSE 8080
