@@ -7,7 +7,8 @@ resource "google_cloud_run_service" "fastapi_service" {
   template {
     spec {
       containers {
-        image = var.image != "" ? var.image : "gcr.io/${local.project_id}/${local.project_id}-api:latest"
+        # Use a public image that exists (Python FastAPI sample) instead of a custom image that doesn't exist yet
+        image = var.image != "" ? var.image : "gcr.io/cloudrun/hello:latest"
         
         resources {
           limits = {
@@ -40,9 +41,10 @@ resource "google_cloud_run_service" "fastapi_service" {
     latest_revision = true
   }
 
-  # Depends on the Firestore database being created first
+  # Depends on the Firestore setup
   depends_on = [
-    google_firestore_database.database
+    null_resource.firestore_setup,
+    google_project_service.apis["run.googleapis.com"]
   ]
 }
 
@@ -56,6 +58,6 @@ resource "google_cloud_run_service_iam_member" "public_access" {
 
 # Output the Cloud Run URL
 output "fastapi_url" {
-  value = google_cloud_run_service.fastapi_service.status[0].url
+  value       = google_cloud_run_service.fastapi_service.status[0].url
   description = "The URL of the deployed FastAPI service"
 } 

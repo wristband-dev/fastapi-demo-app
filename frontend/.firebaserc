@@ -1,0 +1,17 @@
+{
+  "projects": {
+    "default": "wb-python-fastapi-accelerator"
+  },
+  "targets": {
+    "wb-python-fastapi-accelerator": {
+      "hosting": {
+        "production": [
+          "wb-python-fastapi-accelerator"
+        ],
+        "staging": [
+          "wb-python-fastapi-accelerator-staging"
+        ]
+      }
+    }
+  }
+}

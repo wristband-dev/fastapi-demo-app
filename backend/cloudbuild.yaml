@@ -1,0 +1,25 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/wb-python-fastapi-accelerator/wb-python-fastapi-accelerator-api:latest', '.']
+  
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/wb-python-fastapi-accelerator/wb-python-fastapi-accelerator-api:latest']
+  
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'wb-python-fastapi-accelerator-staging'
+      - '--image'
+      - 'gcr.io/wb-python-fastapi-accelerator/wb-python-fastapi-accelerator-api:latest'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+images:
+  - 'gcr.io/wb-python-fastapi-accelerator/wb-python-fastapi-accelerator-api:latest'

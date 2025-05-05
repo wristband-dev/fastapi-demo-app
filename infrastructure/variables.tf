@@ -23,7 +23,7 @@ variable "org_id" {
 }
 
 variable "billing_account" {
-  description = "The billing account to associate with the project. Required if creating a new project."
+  description = "The billing account to associate with the project. Required if not provided via GCP_BILLING_ACCOUNT_ID env var."
   type        = string
   default     = ""
 }
@@ -41,9 +41,9 @@ variable "trigger_branch" {
 }
 
 variable "firestore_location" {
-  description = "The location for the Firestore database"
+  description = "The location for the Firestore database (Note: currently hardcoded to 'us-central1')"
   type        = string
-  default     = "nam5"  # Valid Firestore locations: nam5 (us-central), eur3 (europe-west), etc.
+  default     = "us-central1"  # Must be a valid Firestore location
 }
 
 variable "github_owner" {

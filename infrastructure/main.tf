@@ -35,37 +35,32 @@ locals {
   )
 }
 
-# Check for billing account ID environment variable
-resource "null_resource" "billing_account_check" {
+# Check and validate billing account
+resource "null_resource" "billing_account_validation" {
+  # This will fail fast if billing account is not properly set
   provisioner "local-exec" {
     command = <<EOT
-      echo ""
-      echo "Checking for GCP billing account..."
-      if [ -n "$GCP_BILLING_ACCOUNT_ID" ]; then
-        echo "$GCP_BILLING_ACCOUNT_ID" > /tmp/gcp_billing_account_id
-        echo "Found billing account from environment variable: $GCP_BILLING_ACCOUNT_ID"
-        echo "BILLING_ACCOUNT_FOUND=true" > /tmp/billing_status
-      else
-        echo "WARNING: GCP_BILLING_ACCOUNT_ID environment variable is not set."
-        echo "MANUAL_SETUP_REQUIRED" > /tmp/gcp_billing_account_id
-        echo "BILLING_ACCOUNT_FOUND=false" > /tmp/billing_status
-        
-        echo ""
+      # Check if billing account is provided
+      if [ -z "$GCP_BILLING_ACCOUNT_ID" ] && [ -z "${var.billing_account}" ]; then
+        echo "ERROR: No billing account provided."
         echo "========================================================================"
-        echo "  IMPORTANT: Manual billing account setup will be required"
+        echo "  BILLING ACCOUNT IS REQUIRED"
         echo "========================================================================"
-        echo "No billing account was provided. You need to manually link a billing account"
-        echo "in the GCP Console before proceeding with Terraform apply:"
-        echo ""
-        echo "1. Go to: https://console.cloud.google.com/billing/linkedaccount?project=${local.project_id}"
-        echo "2. Link an existing billing account or create a new one"
-        echo "3. Then run 'terraform apply' again to continue setup"
-        echo ""
-        echo "Alternatively, set the GCP_BILLING_ACCOUNT_ID environment variable:"
-        echo "export GCP_BILLING_ACCOUNT_ID=XXXXXX-XXXXXX-XXXXXX"
+        echo "You must provide a billing account ID via either:"
+        echo "- Environment variable: export GCP_BILLING_ACCOUNT_ID=XXXXX-XXXXX-XXXXX"
+        echo "- Or as a Terraform variable: -var=\"billing_account=XXXXX-XXXXX-XXXXX\""
         echo "========================================================================"
-        exit 1  # Stop execution if billing account is not set
+        exit 1
       fi
+      
+      # Use the provided billing account
+      BILLING_ACCOUNT=${var.billing_account}
+      if [ -z "$BILLING_ACCOUNT" ]; then
+        BILLING_ACCOUNT=$GCP_BILLING_ACCOUNT_ID
+      fi
+      
+      echo "Using billing account: $BILLING_ACCOUNT"
+      echo $BILLING_ACCOUNT > /tmp/gcp_billing_account_id
     EOT
     interpreter = ["bash", "-c"]
   }
@@ -74,17 +69,12 @@ resource "null_resource" "billing_account_check" {
 # Read the billing account ID from the file
 data "local_file" "billing_account_file" {
   filename = "/tmp/gcp_billing_account_id"
-  depends_on = [null_resource.billing_account_check]
+  depends_on = [null_resource.billing_account_validation]
 }
 
 locals {
-  # Process the billing account - either from var, env var, or empty if manual setup is needed
-  billing_account_raw = trimspace(data.local_file.billing_account_file.content)
-  billing_account = (var.billing_account != "" ? 
-                     var.billing_account : 
-                     (local.billing_account_raw != "MANUAL_SETUP_REQUIRED" ? 
-                       local.billing_account_raw : 
-                       ""))
+  # Get the billing account ID - this will never be empty due to validation above
+  billing_account = trimspace(data.local_file.billing_account_file.content)
 }
 
 provider "google" {
@@ -92,8 +82,25 @@ provider "google" {
   region  = var.gcp_region
 }
 
-# Check if user has access at the organizational level
-data "google_client_config" "current" {}
+# Check if user has access
+resource "null_resource" "check_access" {
+  provisioner "local-exec" {
+    command = <<EOT
+      PROJECT_EXISTS=$(gcloud projects describe ${local.project_id} --format=json 2>/dev/null || echo "not_found")
+      if [ "$PROJECT_EXISTS" != "not_found" ]; then
+        # Project exists, check if user has access
+        gcloud projects get-iam-policy ${local.project_id} --format=json 2>/dev/null || {
+          echo "ERROR: Project ${local.project_id} exists but you don't have access to it"
+          exit 1
+        }
+        echo "Project exists and user has access"
+      else
+        echo "Project doesn't exist and will be created"
+      fi
+    EOT
+    interpreter = ["bash", "-c"]
+  }
+}
 
 # Try to get project if it exists
 data "google_project" "project" {
@@ -110,41 +117,67 @@ resource "google_project" "project" {
   billing_account = local.billing_account
 
   # Only create if project doesn't already exist
-  # We rely on Terraform's error handling if the project already exists but user doesn't have access
   lifecycle {
-    # Prevent destruction of the project
     prevent_destroy = true
   }
 
   depends_on = [
-    null_resource.billing_account_check
+    null_resource.billing_account_validation,
+    null_resource.check_access
   ]
 }
 
-# Check billing account status
+# Verify billing is actually enabled and retry if needed
 resource "null_resource" "verify_billing" {
   count = var.check_only ? 0 : 1
 
   provisioner "local-exec" {
     command = <<EOT
-      echo "Verifying billing account status for project ${local.project_id}..."
-      PROJECT_BILLING=$(gcloud billing projects describe ${local.project_id} --format="value(billingEnabled)" 2>/dev/null || echo "error")
+      echo "Verifying billing account is enabled for project ${local.project_id}..."
       
-      if [ "$PROJECT_BILLING" = "error" ] || [ "$PROJECT_BILLING" = "false" ]; then
-        echo "ERROR: Project ${local.project_id} does not have billing enabled."
+      MAX_RETRIES=5
+      RETRY_COUNT=0
+      SUCCESS=false
+      
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$SUCCESS" != "true" ]; do
+        # First try to link the billing account
+        echo "Attempt $((RETRY_COUNT+1)) to link billing account ${local.billing_account} to project ${local.project_id}..."
+        gcloud billing projects link ${local.project_id} --billing-account=${local.billing_account} || true
+        
+        # Wait a moment for propagation
+        sleep 10
+        
+        # Verify billing is enabled
+        PROJECT_BILLING=$(gcloud billing projects describe ${local.project_id} --format="value(billingEnabled)" 2>/dev/null || echo "error")
+        
+        if [ "$PROJECT_BILLING" = "true" ]; then
+          echo "✓ Billing successfully enabled for project ${local.project_id}!"
+          SUCCESS=true
+          break
+        else
+          echo "! Billing not yet enabled. Retrying in 10 seconds..."
+          RETRY_COUNT=$((RETRY_COUNT+1))
+          sleep 10
+        fi
+      done
+      
+      if [ "$SUCCESS" != "true" ]; then
+        echo "ERROR: Could not enable billing for project ${local.project_id} after $MAX_RETRIES attempts."
         echo ""
         echo "========================================================================"
-        echo "  IMPORTANT: Manual billing account setup is required"
+        echo "  BILLING ACCOUNT LINKING FAILED"
         echo "========================================================================"
-        echo "Please enable billing for this project before continuing:"
+        echo "Attempted to link ${local.project_id} to billing account ${local.billing_account}"
+        echo "but the operation failed. This could be due to:"
         echo ""
-        echo "1. Go to: https://console.cloud.google.com/billing/linkedaccount?project=${local.project_id}"
-        echo "2. Link an existing billing account or create a new one"
-        echo "3. Then run 'terraform apply' again to continue setup"
+        echo "1. The billing account doesn't exist"
+        echo "2. You don't have permission to use this billing account"
+        echo "3. The billing account is closed or disabled"
+        echo "4. GCP API latency issues - try running terraform apply again"
         echo "========================================================================"
         exit 1
       else
-        echo "Billing is properly configured for the project."
+        echo "Billing account ${local.billing_account} successfully linked to project ${local.project_id}"
       fi
     EOT
     interpreter = ["bash", "-c"]
@@ -181,53 +214,6 @@ resource "google_project_service" "apis" {
     google_project.project,
     null_resource.verify_billing
   ]
-}
-
-# Display post-apply instructions if manual billing setup was required
-resource "null_resource" "post_apply_instructions" {
-  provisioner "local-exec" {
-    command = <<EOT
-      if [ -f "/tmp/billing_status" ] && grep -q "BILLING_ACCOUNT_FOUND=false" /tmp/billing_status; then
-        echo ""
-        echo "========================================================================"
-        echo "  REMINDER: Manual billing account setup is required"
-        echo "========================================================================"
-        echo "No billing account was provided during setup. You need to manually link"
-        echo "a billing account in the GCP Console before proceeding:"
-        echo ""
-        echo "1. Go to: https://console.cloud.google.com/billing/linkedaccount?project=${local.project_id}"
-        echo "2. Link an existing billing account or create a new one"
-        echo "3. Then run 'terraform apply' again to continue setup"
-        echo "========================================================================"
-      fi
-    EOT
-    interpreter = ["bash", "-c"]
-  }
-
-  depends_on = [
-    google_project.project
-  ]
-}
-
-# Use a local-exec provisioner to check if user has access
-resource "null_resource" "check_access" {
-  # This will run regardless of whether the project exists or is being created
-  provisioner "local-exec" {
-    command = <<EOT
-      PROJECT_EXISTS=$(gcloud projects describe ${local.project_id} --format=json 2>/dev/null || echo "not_found")
-      if [ "$PROJECT_EXISTS" != "not_found" ]; then
-        # Project exists, check if user has access
-        gcloud projects get-iam-policy ${local.project_id} --format=json 2>/dev/null || {
-          echo "ERROR: Project ${local.project_id} exists but you don't have access to it"
-          exit 1
-        }
-        echo "Project exists and user has access"
-      else
-        echo "Project doesn't exist and will be created"
-      fi
-    EOT
-    interpreter = ["bash", "-c"]
-  }
 }
 
 # Local to determine the effective project resource
