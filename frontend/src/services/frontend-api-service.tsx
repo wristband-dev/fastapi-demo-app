@@ -1,5 +1,4 @@
 import frontendApiClient from "@/client/frontend-api-client";
-import { ApiError } from "@/utils/ApiError";
 
 
 async function getSession() {

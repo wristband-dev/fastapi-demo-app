@@ -1,13 +1,12 @@
-logos
 
-- start backend on 6001
+- make env only wristband export (CLIENT_ID, CLIENT_SECRET, WRISTBAND_APPLICATION_DOMAIN)
+    - migrate other stuff to config file
+- start backend on 6001 not 8080
+- start frontend on 3001 not 3000
 - remove constants from frontend
 - add tenant sub collection for db
-- remove wristband folder from dockerfile
+- remove wristband folder -> move to its own repo (from dockerfile)
+- replace hard coded local host
+- update readme for wristband config (copy from b2b-expressjs-demo-app)
 
-backend
-- go thru auth_middleware and session endpoint
-- add tests
-
-frontend
-- replace localhost8080 hard code
+- create package.json to run concurrently (copy from b2b-expressjs-demo-app)
