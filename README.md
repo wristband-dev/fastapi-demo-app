@@ -97,6 +97,14 @@ pip install -e .
 # Option B: Poetry Installation (Optional)
 poetry install
 ```
+
+#### Frontend Setup
+```base
+cd frontend
+npm install
+```
+
+
 ### 5. Setup Firebase CLI
 1. Install Firebase CLI
    ```base

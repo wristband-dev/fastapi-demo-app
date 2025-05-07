@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Geist, Geist_Mono } from "next/font/google";
 import { useState } from "react";
-import { useWristband } from "@/context/auth-context";
+import { useWristbandAuth, redirectToLogin, redirectToLogout, useWristbandSession } from "@wristband/react-client-auth";
 import TransactionPortal from "@/components/TransactionPortal";
 import WristbandTestComponents from "@/components/WristbandTestComponents";
 
@@ -17,16 +17,17 @@ const geistMono = Geist_Mono({
 
 export default function Home() {
   const [logoutMessage, setLogoutMessage] = useState<string | null>(null);
-  const { isAuthenticated, isLoading, sessionData, login, logout } = useWristband();
+  const { isAuthenticated, isLoading} = useWristbandAuth();
+  const { metadata } = useWristbandSession();
   const [cookies, setCookies] = useState<string>("");
 
   const handleLogout = () => {
     setLogoutMessage("Logging out...");
-    logout();
+    redirectToLogout('http://localhost:8080/api/auth/logout');
   };
 
   const handleLogin = () => {
-    login();
+    redirectToLogin('http://localhost:8080/api/auth/login');
   };
 
   return (
@@ -50,11 +51,11 @@ export default function Home() {
         )}
         {isLoading ? (
           <p>Loading session...</p>
-        ) : isAuthenticated && sessionData ? (
+        ) : isAuthenticated && metadata ? (
           <div className="p-4 bg-green-100 dark:bg-green-900 rounded w-full">
             <p className="font-bold mb-2">Session active:</p>
             <div className="bg-white dark:bg-gray-800 p-2 rounded max-h-40 overflow-auto">
-              <pre className="text-xs whitespace-pre-wrap break-all">{JSON.stringify(sessionData, null, 2)}</pre>
+              <pre className="text-xs whitespace-pre-wrap break-all">{JSON.stringify(metadata, null, 2)}</pre>
             </div>
           </div>
         ) : (

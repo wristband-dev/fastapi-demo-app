@@ -5,6 +5,4 @@ PUBLIC_PATHS: List[str] = [
     "/api/auth/login",
     "/api/auth/callback",
     "/api/auth/logout",
-    "/api/auth/test_decrypt_cookie",
-    "/api/auth/session"
 ] 

@@ -20,7 +20,7 @@ logger: logging.Logger = get_logger()
 # Initialize router
 router = APIRouter()
 
-# TODO - clean up session logic
+# TODO - clean up session logic (401 on no session)
 @router.route('/session', methods=['GET', 'POST'])
 def session(request: Request) -> Response | Any:
     logger.debug("Session endpoint called")
@@ -44,6 +44,8 @@ def session(request: Request) -> Response | Any:
         logger.debug("Attempting to decrypt session cookie")
         session_data_dict = CookieEncryptor(session_secret_cookie).decrypt(session)
         session_data = SessionData.from_dict(session_data_dict)
+
+        print(f"session data init asdasd: {session_data.to_session_init_data()}")
         logger.debug("Session cookie decrypted successfully")
         
         # Check if we need to refresh the token
@@ -79,6 +81,7 @@ def session(request: Request) -> Response | Any:
                     samesite="lax"
                 )
                 logger.debug("Updated session cookie with refreshed token")
+                
                 
                 return response
             else:
