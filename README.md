@@ -20,10 +20,8 @@
 
 # Wristband Python FastAPI Accelerator
 
+
 A full-stack application accelerator showcasing Wristband authentication integration with a FastAPI backend and Next.js frontend. This repository provides a production-ready foundation for building secure, multi-tenant web applications with enterprise-grade authentication.
-
-
-
 
 
 ## Architecture
@@ -31,13 +29,7 @@ A full-stack application accelerator showcasing Wristband authentication integra
 - **FastAPI Backend**: A Python backend with Wristband authentication integration
 - **Next.js Frontend**: A modern React-based frontend with authentication context
 - **Firestore Database**: A NoSQL document database for storing application data with flexible schema support
-- **GCP Cloud Provider** (optional): Integration with Google Cloud Platform for hosting and additional services
-
-TODO ADD DOCS ABOUT EMULATOR VS HOSTING
-
-
-
-
+- **(OPTIONAL) Google Cloud Provider**: Integration with Google Cloud Platform for hosting and additional services
 
 
 ## Setup
@@ -51,7 +43,6 @@ TODO ADD DOCS ABOUT EMULATOR VS HOSTING
    git clone https://github.com/wristband-dev/python-accelerator.git
    cd wristband-python-fastapi-accelerator
    ```
-
 4. (Optional) Keep your fork in sync with the original repository:
    ```bash
    # Add the original repository as a remote called "upstream"
@@ -65,17 +56,16 @@ TODO ADD DOCS ABOUT EMULATOR VS HOSTING
    git merge upstream/main
    ```
 
-### 2. Wristband Configuration
 
+### 2. Wristband Configuration (TODO - JIM TO ADD WRISTBAD DEMO APP TO DASHBOARD)
 1. Create an application in Wristband:
    - Configure Application Domain Name
    - Set Application Login URL: `https://localhost:8080/api/auth/login` (for local testing)
-
 2. Add OAuth2 Client:
    - Set platform to "Python"
    - Set callback URL: `https://localhost:8080/api/auth/callback` (for local testing)
-
 3. Create a tenant in Wristband
+
 
 ### 3. Environment Variables
 1. Create environemnt varirable file
@@ -90,12 +80,11 @@ TODO ADD DOCS ABOUT EMULATOR VS HOSTING
    WRISTBAND_APPLICATION_DOMAIN="WRISTBAND_APPLICATION_DOMAIN"
    ```
 
+   
 TODO - OR just get from export file
 
 ### 4. Install Local Packages
-
 #### Backend Setup 🐍
-
 ```bash
 # Navigate to backend directory
 cd backend
@@ -108,8 +97,6 @@ pip install -e .
 # Option B: Poetry Installation (Optional)
 poetry install
 ```
-
-
 ### 5. Setup Firebase CLI
 1. Install Firebase CLI
    ```base
@@ -122,7 +109,6 @@ poetry install
 
 
 #### Frontend Setup 📦
-
 ```bash
 # Navigate to frontend directory
 cd frontend
@@ -132,32 +118,23 @@ npm install
 ```
 
 
-
-
-
-
-
 ## Local Start Up
 
-1. Start Backend Fast Api
+1. Start Backend API
    ```
    cd backend
    python3 run.py
    ```
-
 2. Start Backend Database
    ```
    cd backend
    firebase emulators:start --only firestore
    ```
-
 3. Start Frontend
    ```
    cd frontend
    npm run dev
    ```
-
-
 
 
 ## Deployment
@@ -171,8 +148,5 @@ npm install
       ```bash
       docker run --env-file .env -p 8080:8080 wristband-backend
       ```
-
-
    2. Host firestore database in firebase
-
    3. Publish the frontend (next js) to vercel

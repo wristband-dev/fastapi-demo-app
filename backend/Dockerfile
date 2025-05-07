@@ -3,9 +3,9 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copy requirements and application code
-COPY pyproject.toml run.py /app/
-COPY src/ /app/src/
-COPY wristband/ /app/wristband/
+COPY backend/pyproject.toml backend/run.py /app/
+COPY backend/src/ /app/src/
+COPY backend/wristband/ /app/wristband/
 
 # Install pip and dependencies
 RUN pip install .

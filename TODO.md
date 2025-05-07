@@ -1,5 +1,7 @@
 logos
 
+- start backend on 6001
+- add tenant sub collection for db
 - remove wristband folder from dockerfile
 
 backend
