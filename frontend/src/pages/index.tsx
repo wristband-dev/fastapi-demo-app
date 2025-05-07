@@ -19,7 +19,6 @@ export default function Home() {
   const [logoutMessage, setLogoutMessage] = useState<string | null>(null);
   const { isAuthenticated, isLoading} = useWristbandAuth();
   const { metadata } = useWristbandSession();
-  const [cookies, setCookies] = useState<string>("");
 
   const handleLogout = () => {
     setLogoutMessage("Logging out...");

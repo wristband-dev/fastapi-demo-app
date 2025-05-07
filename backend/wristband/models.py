@@ -49,8 +49,6 @@ class AuthConfig:
     use_custom_domains: bool = False
     use_tenant_subdomains: bool = False
 
-    # TODO - add validation on auth config fields
-
 @dataclass
 class SessionData:
     is_authenticated: bool

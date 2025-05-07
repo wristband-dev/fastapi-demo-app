@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 # Wristband imports
+from wristband.models import TokenData
 from wristband.models import SessionData
 from wristband.auth import Auth
 from wristband.utils import CookieEncryptor, get_logger, to_bool
@@ -18,8 +19,7 @@ from src.constants import PUBLIC_PATHS
 logger: logging.Logger = get_logger()
 
 
-# TODO: on logout throwing 401
-
+# TODO: clean up 
 class SessionAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response | JSONResponse:
 
@@ -75,7 +75,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
 
                     # Refresh the token
                     logger.debug("Attempting to refresh token")
-                    new_token_data = auth.refresh_token_if_expired(
+                    new_token_data: None | TokenData = auth.refresh_token_if_expired(
                         session_data.refresh_token, 
                         session_data.expires_at
                     )
@@ -91,10 +91,10 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                         request.state.session_data = session_data
                         
                         # Execute the route handler
-                        response = await call_next(request)
+                        response: Response = await call_next(request)
                         
                         # Update the session cookie with new token data
-                        encrypted_session = CookieEncryptor(session_secret_cookie).encrypt(
+                        encrypted_session: str = CookieEncryptor(session_secret_cookie).encrypt(
                             session_data.to_dict()
                         )
                         

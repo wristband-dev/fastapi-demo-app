@@ -59,7 +59,6 @@ class Auth:
         self.scopes: list[str] = auth_config.scopes
         self.use_custom_domains: bool = auth_config.use_custom_domains
         self.use_tenant_subdomains: bool = auth_config.use_tenant_subdomains
-        # TODO - validation on auth config fields
 
         self.api = Api(
             wristband_application_domain=self.wristband_application_domain,
@@ -146,7 +145,6 @@ class Auth:
         param_state: str | None = req.query_params.get("state")
         error: str | None = req.query_params.get("error")
 
-        # TODO - there could be more than one error_description param
         error_description: str | None = req.query_params.get("error_description")
         tenant_custom_domain_param: str | None = req.query_params.get(
             "tenant_custom_domain"

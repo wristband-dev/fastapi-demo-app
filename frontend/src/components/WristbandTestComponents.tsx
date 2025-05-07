@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useWristband } from "@/context/auth-context";
 
 export default function WristbandTestComponents() {
   const [response, setResponse] = useState<string | null>(null);
@@ -32,8 +31,6 @@ export default function WristbandTestComponents() {
         Test Decrypt Cookie
       </button>
      
-
-
       {response && (
         <div className="mt-4 rounded border border-gray-300 dark:border-gray-700">
           <div className="bg-gray-100 dark:bg-gray-800 p-2 border-b border-gray-300 dark:border-gray-700">
