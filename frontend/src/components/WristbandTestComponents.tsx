@@ -3,7 +3,6 @@ import { useWristband } from "@/context/auth-context";
 
 export default function WristbandTestComponents() {
   const [response, setResponse] = useState<string | null>(null);
-  const { refreshSession } = useWristband();
 
   const handleTestDecryptCookie = async () => {
     try {
@@ -24,17 +23,6 @@ export default function WristbandTestComponents() {
     }
   };
 
-  const handleTestSession = async () => {
-    try {
-      console.log("Testing session refresh...");
-      const data = await refreshSession();
-      setResponse(`Session test response: ${JSON.stringify(data)}`);
-    } catch (error) {
-      console.error("Error testing session:", error);
-      setResponse(`Error testing session: ${error}`);
-    }
-  };
-
   return (
     <div className="flex flex-col gap-2 w-full">
       <button
@@ -43,12 +31,9 @@ export default function WristbandTestComponents() {
       >
         Test Decrypt Cookie
       </button>
-      <button
-        onClick={handleTestSession}
-        className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 mt-2"
-      >
-        Test Session
-      </button>
+     
+
+
       {response && (
         <div className="mt-4 rounded border border-gray-300 dark:border-gray-700">
           <div className="bg-gray-100 dark:bg-gray-800 p-2 border-b border-gray-300 dark:border-gray-700">
@@ -73,6 +58,9 @@ export default function WristbandTestComponents() {
           </div>
         </div>
       )}
+
+
+
     </div>
   );
 } 

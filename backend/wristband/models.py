@@ -66,8 +66,9 @@ class SessionData:
     
     def to_session_init_data(self) -> dict[str, Any]:
         return {
-            "is_authenticated": self.is_authenticated,
-            "user_info": self.user_info,
+            "tenantId": self.user_info['tnt_id'],
+            "userId": self.user_info['sub'],
+            "metadata": self.to_dict()
         }
     
     @staticmethod

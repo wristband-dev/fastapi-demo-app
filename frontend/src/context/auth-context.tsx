@@ -1,6 +1,6 @@
 import React, { createContext, useEffect, useState } from 'react';
 
-import { redirectToLogin, redirectToLogout, isUnauthorizedError } from '@/utils/helpers';
+import { isUnauthorizedError } from '@/utils/helpers';
 import { frontendApiService } from '@/services/frontend-api-service';
 
 
