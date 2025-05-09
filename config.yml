@@ -1,0 +1,23 @@
+project:
+    label: "Wristband FastAPI App Demo"
+    id: "wb-fastapi-demo-app"
+    description: "A fastapi demo app for wristband"
+backend:
+    host: "http://localhost:8080"
+frontend:
+    login_url: "http://localhost:8080/api/auth/login"
+    redirect_url: "http://localhost:3000/api/auth/callback"
+    app_home_url: "http://localhost:3000"
+database:
+    host: "http://localhost:6002"
+secrets:
+    login_state_secret: "7ffdbecc-ab7d-4134-9307-2dfcc52f7475"
+    session_cookie_secret: "a8f5f167f44f4964e6c998dee827110c"
+wristband:
+    secure: "false"
+    custom_application_login_page_url: ""
+    dangerously_disable_secure_cookies: "true"
+    root_domain: ""
+    scopes: "openid, profile, email"
+    use_custom_domains: "false"
+    use_tenant_subdomains: "false"
