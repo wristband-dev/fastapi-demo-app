@@ -5,8 +5,8 @@ __pycache__
 .venv
 
 node_modules
-backend/firebase-debug.log
-backend/firestore-debug.log
+firebase-debug.log
+firestore-debug.log
 
 # dependencies
 frontend/node_modules

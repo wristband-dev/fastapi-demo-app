@@ -1,19 +1,24 @@
-import config from './config';
+import getConfig from 'next/config';
 
-// Extract key values from config
-const appHost = config.app.host;
-const backendPort = config.backend.port;
-const loginUrlSuffix = config.backend.login_url_suffix;
-const logoutUrlSuffix = config.backend.logout_url_suffix;
-const sessionUrlSuffix = config.backend.session_url_suffix;
+const { publicRuntimeConfig } = getConfig() || { publicRuntimeConfig: {} };
+
+// Extract key values from publicRuntimeConfig
+// Provide defaults if values might be undefined
+const appHost = publicRuntimeConfig.appHost;
+const backendPort = publicRuntimeConfig.backendPort;
+const loginUrlSuffix = publicRuntimeConfig.loginUrlSuffix;
+const logoutUrlSuffix = publicRuntimeConfig.logoutUrlSuffix;
+const sessionUrlSuffix = publicRuntimeConfig.sessionUrlSuffix;
 
 // Build auth URLs
 export const loginUrl = `${appHost}:${backendPort}/${loginUrlSuffix}`;
 export const logoutUrl = `${appHost}:${backendPort}/${logoutUrlSuffix}`;
 export const sessionUrl = `${appHost}:${backendPort}/${sessionUrlSuffix}`;
 
-export default {
+const authConfig = {
   loginUrl,
   logoutUrl,
   sessionUrl
-}; 
+};
+
+export default authConfig; 
