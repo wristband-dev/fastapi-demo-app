@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useWristbandAuth, redirectToLogin, redirectToLogout, useWristbandSession } from "@wristband/react-client-auth";
 import TransactionPortal from "@/components/TransactionPortal";
 import WristbandTestComponents from "@/components/WristbandTestComponents";
+import { loginUrl, logoutUrl } from "@/lib/authConfig";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,11 +23,11 @@ export default function Home() {
 
   const handleLogout = () => {
     setLogoutMessage("Logging out...");
-    redirectToLogout('http://localhost:8080/api/auth/logout');
+    redirectToLogout(logoutUrl);
   };
 
   const handleLogin = () => {
-    redirectToLogin('http://localhost:8080/api/auth/login');
+    redirectToLogin(loginUrl);
   };
 
   return (

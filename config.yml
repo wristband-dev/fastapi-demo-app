@@ -3,7 +3,9 @@ app:
 backend:
     port: 6001
     login_url_suffix: "api/auth/login"
+    logout_url_suffix: "api/auth/logout"
     redirect_uri_suffix: "api/auth/callback"
+    session_url_suffix: "api/auth/session"
 database:
     port: 6002
 frontend:
