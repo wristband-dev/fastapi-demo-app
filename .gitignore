@@ -7,6 +7,7 @@ __pycache__
 node_modules
 firebase-debug.log
 firestore-debug.log
+package-lock.json
 
 # dependencies
 frontend/node_modules

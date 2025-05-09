@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "description": "Full-stack application accelerator with FastAPI backend and Next.js frontend",
   "main": "index.js",
-  "database": {
-    "start": "concurrently \"npm run backend\" \"npm run database\" \"npm run frontend\"",
+  "scripts": {
+    "start": "concurrently \"npm run database\" \"npm run backend\" \"npm run frontend\"",
     "backend": "cd backend && python3 run.py",
     "database": "node ./database/run.js",
     "frontend": "cd frontend && npm run dev",
     "install-all": "npm install && cd frontend && npm install",
-    "setup-python": "cd backend && python3 -m venv .venv && .venv/bin/pip install .",
+    "setup-python": "cd backend && python3 -m venv .venv && pip install .",
     "install-python-deps": "cd backend && pip install -e .",
     "setup": "npm install && npm run setup-python && cd frontend && npm install",
     "install-firebase": "npm install -g firebase-tools && echo 'Firebase tools installed globally. You may need to login with: firebase login'",
