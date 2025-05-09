@@ -84,65 +84,19 @@ A full-stack application accelerator showcasing Wristband authentication integra
 TODO - OR just get from export file
 
 ### 4. Install Local Packages
-#### Backend Setup 🐍
 ```bash
-# Navigate to backend directory
-cd backend
-
-# Option A: Pip Installation
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
-
-# Option B: Poetry Installation (Optional)
-poetry install
-```
-
-#### Frontend Setup
-```base
-cd frontend
 npm install
 ```
+[Manual Local Package Installation](#install-local-packages)
 
-
-### 5. Setup Firebase CLI
-1. Install Firebase CLI
-   ```base
-   npm install -g firebase-tools
-   ```
-2. Login to Firebase CLI
-   ```base
-   firebase login
-   ```
-
-
-#### Frontend Setup 📦
-```bash
-# Navigate to frontend directory
-cd frontend
-
-# Install dependencies
-npm install
-```
 
 
 ## Local Start Up
+```bash
+npm start
+```
+[Manual Start Up](#local-start-up)
 
-1. Start Backend API
-   ```
-   cd backend
-   python3 run.py
-   ```
-2. Start Backend Database
-   ```
-   cd backend
-   firebase emulators:start --only firestore
-   ```
-3. Start Frontend
-   ```
-   cd frontend
-   npm run dev
-   ```
 
 
 ## Deployment
@@ -158,3 +112,55 @@ npm install
       ```
    2. Host firestore database in firebase
    3. Publish the frontend (next js) to vercel
+
+
+---
+
+
+## Manual Installation
+### Install Local Packages
+#### Backend Setup 🐍
+```bash
+# Navigate to backend directory
+cd backend
+
+# Option A: Pip Installation
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+
+# Option B: Poetry Installation (Optional)
+poetry install
+```
+#### Database Setup 📀
+```bash
+# install firebase cli globally
+npm install -g firebase-tools
+
+# login
+firebase login
+```
+#### Frontend Setup 📦
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+```
+### Local Start Up
+#### Start Backend API 🐍
+```
+cd backend
+python3 run.py
+```
+#### Start Backend Database 📀
+```
+cd backend
+firebase emulators:start --only firestore
+```
+#### Start Frontend 📦
+```
+cd frontend
+npm run dev
+```
