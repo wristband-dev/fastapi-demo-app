@@ -157,6 +157,10 @@ python3 run.py
 #### Start Backend Database 📀
 ```
 cd backend
+# dynamic config file vars
+node ./scripts/run-database.js
+
+# hardcoded values (need to assign env vars to be able to access the database in the py env)
 firebase emulators:start --only firestore --project wristband-fastapi-demo
 ```
 #### Start Frontend 📦
