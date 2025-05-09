@@ -37,6 +37,10 @@ A full-stack application accelerator showcasing Wristband authentication integra
 ```bash
 apt-get update && apt-get install -y curl
 ```
+**GIT**
+```bash
+apt-get update && apt-get install -y git
+```
 **NPM**
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
@@ -44,8 +48,11 @@ curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 ```
 **PYTHON3**
 ```bash
-apt-get install -y python3 python3-pip
-apt install python3.8-venv
+apt-get update
+apt-get install -y software-properties-common
+add-apt-repository ppa:deadsnakes/ppa
+apt-get update
+apt-get install -y python3.11 python3.11-venv python3.11-dev
 ```
 
 

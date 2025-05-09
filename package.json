@@ -9,7 +9,7 @@
     "database": "node ./database/run.js",
     "frontend": "cd frontend && npm run dev",
     "install-all": "npm install && cd frontend && npm install",
-    "setup-python": "cd backend && python3 -m venv .venv && pip install .",
+    "setup-python": "cd backend && python3 -m venv .venv && source .venv/bin/activate && pip install -e .",
     "install-python-deps": "cd backend && pip install -e .",
     "setup": "npm install && npm run setup-python && cd frontend && npm install",
     "install-firebase": "npm install -g firebase-tools && echo 'Firebase tools installed globally. You may need to login with: firebase login'",
