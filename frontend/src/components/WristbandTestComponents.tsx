@@ -5,7 +5,7 @@ export default function WristbandTestComponents() {
 
   const handleTestDecryptCookie = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/auth/test_decrypt_cookie", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/test_decrypt_cookie`, {
         method: "GET",
         credentials: "include", // Include cookies in the request
       });

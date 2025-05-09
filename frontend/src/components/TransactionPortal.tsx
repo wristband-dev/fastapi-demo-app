@@ -46,7 +46,7 @@ export default function TransactionPortal() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://localhost:8080/api/transactions", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions`, {
         credentials: "include",
       });
       
@@ -110,7 +110,7 @@ export default function TransactionPortal() {
 
       if (editingId) {
         // Update existing transaction
-        response = await fetch(`http://localhost:8080/api/transactions/${editingId}`, {
+        response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/${editingId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -120,7 +120,7 @@ export default function TransactionPortal() {
         });
       } else {
         // Create new transaction
-        response = await fetch("http://localhost:8080/api/transactions", {
+        response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -171,7 +171,7 @@ export default function TransactionPortal() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`http://localhost:8080/api/transactions/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/${id}`, {
         method: "DELETE",
         credentials: "include",
       });

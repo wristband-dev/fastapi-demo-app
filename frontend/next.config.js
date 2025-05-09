@@ -15,6 +15,12 @@ try {
   // Provide default values or handle the error as appropriate
 }
 
+// Construct the backend URL from the loaded config
+const appHost = appConfig.app?.host;
+const backendPort = appConfig.backend?.port; // Default to 8080 if not found
+const backendUrl = `${appHost}:${backendPort}`;
+const apiBaseUrl = `${backendUrl}/api`; // For client-side use
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true, // Or your existing config
@@ -22,14 +28,26 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",  // Matches any request starting with /api/
-        destination: "http://localhost:8080/api/:path*",  // Forwards to backend
+        destination: `${backendUrl}/api/:path*`,  // Forwards to backend using dynamic URL
       },
     ];
   },
   // Other Next.js configurations can go here
   
+  // Expose environment variables to the browser
+  env: {
+    NEXT_PUBLIC_API_BASE_URL: apiBaseUrl,
+    // Keep existing publicRuntimeConfig for now, or migrate them here too
+    NEXT_PUBLIC_APP_HOST: appConfig.app?.host,
+    NEXT_PUBLIC_BACKEND_PORT: appConfig.backend?.port,
+    NEXT_PUBLIC_LOGIN_URL_SUFFIX: appConfig.backend?.login_url_suffix,
+    NEXT_PUBLIC_LOGOUT_URL_SUFFIX: appConfig.backend?.logout_url_suffix,
+    NEXT_PUBLIC_SESSION_URL_SUFFIX: appConfig.backend?.session_url_suffix,
+  },
+
   publicRuntimeConfig: {
-    // Make config values available to the client
+    // Values here are available on both server and client.
+    // Consider migrating fully to `env` for client-side vars.
     appHost: appConfig.app?.host,
     backendPort: appConfig.backend?.port,
     loginUrlSuffix: appConfig.backend?.login_url_suffix,

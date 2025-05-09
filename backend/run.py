@@ -71,11 +71,6 @@ def create_app() -> FastAPI:
     login_url: str = f"{app_host}:{backend_port}/{backend_login_url_suffix}"
     redirect_uri: str = f"{app_host}:{backend_port}/{backend_redirect_uri_suffix}"
 
-    print(f"login_url: {login_url}")
-    print(f"redirect_uri: {redirect_uri}")
-
-
-
     # Convert string-based boolean environment variables
     auth_config = AuthConfig(
         client_id=os.getenv("CLIENT_ID", ""),

@@ -217,9 +217,7 @@ class TestDecryptCookieResponse(BaseModel):
 @router.get('/test_decrypt_cookie')
 @router.post('/test_decrypt_cookie')
 def test_decrypt_cookie(request: Request) -> TestDecryptCookieResponse:
-    session_secret_cookie: Optional[str] = os.getenv("SESSION_COOKIE_SECRET")
-    if session_secret_cookie is None:
-        raise ValueError("Missing required environment variable: SESSION_COOKIE_SECRET")
+    session_secret_cookie: Optional[str] = get_config_value("secrets", "session_cookie_secret")
 
     cookie_value: str | None = request.cookies.get("session")
     if cookie_value is None:

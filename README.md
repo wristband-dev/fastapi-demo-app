@@ -157,7 +157,7 @@ python3 run.py
 #### Start Backend Database 📀
 ```
 cd backend
-firebase emulators:start --only firestore
+firebase emulators:start --only firestore --project wristband-fastapi-demo
 ```
 #### Start Frontend 📦
 ```
