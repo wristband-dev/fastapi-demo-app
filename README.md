@@ -40,13 +40,13 @@ A full-stack application accelerator showcasing Wristband authentication integra
 2. This will create a copy of the repository in your GitHub account.
 3. Clone your forked repository to your local machine:
    ```bash
-   git clone https://github.com/wristband-dev/python-accelerator.git
-   cd wristband-python-fastapi-accelerator
+   git clone https://github.com/wristband-dev/fastapi-demo-app.git
+   cd fastapi-demo-app
    ```
 4. (Optional) Keep your fork in sync with the original repository:
    ```bash
    # Add the original repository as a remote called "upstream"
-   git remote add upstream https://github.com/wristband-dev/python-accelerator.git
+   git remote add upstream https://github.com/wristband-dev/fastapi-demo-app.git
    
    # Fetch changes from the upstream repository
    git fetch upstream
@@ -86,6 +86,7 @@ TODO - OR just get from export file
 ### 4. Install Local Packages
 ```bash
 npm install
+npm run setup
 ```
 [Manual Local Package Installation](#install-local-packages)
 
