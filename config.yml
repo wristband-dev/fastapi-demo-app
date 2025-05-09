@@ -8,6 +8,7 @@ backend:
     session_url_suffix: "api/auth/session"
 database:
     port: 6002
+    project_id: "wristband-fastapi-demo"
 frontend:
     port: 3001
 secrets:
@@ -23,7 +24,3 @@ wristband:
     use_tenant_subdomains: "false"
 logging:
     level: "INFO"
-gcp:
-    label: "Wristband FastAPI App Demo"
-    id: "wb-fastapi-demo-app"
-    description: "A fastapi demo app for wristband"
