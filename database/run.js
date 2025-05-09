@@ -7,11 +7,12 @@ try {
     const configFile = fs.readFileSync('config.yml', 'utf8');
     const config = yaml.load(configFile);
 
+    const host = config.app.host;
     const dbPort = config.database.port;
     const projectId = config.database.project_id;
     
     // Construct FIRESTORE_EMULATOR_HOST using "127.0.0.1" and the dynamic port from config.yml
-    const firestoreEmulatorHost = `127.0.0.1:${dbPort}`;
+    const firestoreEmulatorHost = `${host}:${dbPort}`;
 
     console.log(`Preparing to start database emulator with dynamic configuration:`);
     console.log(`  FIRESTORE_EMULATOR_HOST=${firestoreEmulatorHost}`);
