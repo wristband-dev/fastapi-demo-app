@@ -31,6 +31,23 @@ A full-stack application accelerator showcasing Wristband authentication integra
 - **Firestore Database**: A NoSQL document database for storing application data with flexible schema support
 - **(OPTIONAL) Google Cloud Provider**: Integration with Google Cloud Platform for hosting and additional services
 
+## Prerequisities
+
+**CURL**
+```bash
+apt-get update && apt-get install -y curl
+```
+**NPM**
+```bash
+curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
+```
+**PYTHON3**
+```bash
+apt-get install -y python3 python3-pip
+apt install python3.8-venv
+```
+
 
 ## Setup
 
