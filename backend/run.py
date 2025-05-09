@@ -17,6 +17,8 @@ from src import transaction_router
 from src import auth_router
 from src.auth_middleware import SessionAuthMiddleware
 from src.db import start_db
+from src.config_utils import get_config_value
+
 # Load environment variables
 load_dotenv()
 
@@ -40,12 +42,7 @@ def create_app() -> FastAPI:
     # Required environment variables:
     required_env_vars: list[str] = [
         "CLIENT_ID", 
-        "CLIENT_SECRET", 
-        "LOGIN_STATE_SECRET", 
-        "LOGIN_URL", 
-        "REDIRECT_URI",
-        "APP_HOME_URL",
-        "SESSION_COOKIE_SECRET"
+        "CLIENT_SECRET"
     ]
     
     # Check if any required var is missing
@@ -53,29 +50,46 @@ def create_app() -> FastAPI:
     if missing_vars:
         raise ValueError(f"Missing required environment variables: {missing_vars}")
 
-    # Safely parse SCOPES as a Python list (e.g. "['openid','offline_access','email']")
-    raw_scopes: str = os.getenv("SCOPES", "['openid', 'offline_access', 'email']")
+    # Safely parse SCOPES as a Python list
+    raw_scopes: str = get_config_value("wristband", "scopes")
+
     try:
-        scopes_list = ast.literal_eval(raw_scopes)
-        if not isinstance(scopes_list, list):
-            raise ValueError
+        # Split the comma-separated string and strip whitespace
+        scopes_list = [scope.strip() for scope in raw_scopes.split(',')]
+        if not scopes_list or any(not scope for scope in scopes_list):
+            raise ValueError("Empty scope found")
     except Exception:
-        raise ValueError("SCOPES must be a valid Python list literal (e.g. \"['openid','email']\").")
+        raise ValueError("SCOPES must be a comma-separated string (e.g. \"openid, email, offline_access\").")
+    
+    # get urls
+    app_host: str = get_config_value("app", "host")
+    backend_port: int = int(get_config_value("backend", "port"))
+    backend_login_url_suffix: str = get_config_value("backend", "login_url_suffix")
+    backend_redirect_uri_suffix: str = get_config_value("backend", "redirect_uri_suffix")
+
+
+    login_url: str = f"{app_host}:{backend_port}/{backend_login_url_suffix}"
+    redirect_uri: str = f"{app_host}:{backend_port}/{backend_redirect_uri_suffix}"
+
+    print(f"login_url: {login_url}")
+    print(f"redirect_uri: {redirect_uri}")
+
+
 
     # Convert string-based boolean environment variables
     auth_config = AuthConfig(
         client_id=os.getenv("CLIENT_ID", ""),
         client_secret=os.getenv("CLIENT_SECRET", ""),
-        login_state_secret=os.getenv("LOGIN_STATE_SECRET", ""),
-        login_url=os.getenv("LOGIN_URL", ""),
-        redirect_uri=os.getenv("REDIRECT_URI", ""),
+        login_state_secret=get_config_value("secrets", "login_state_secret"),
+        login_url=login_url,
+        redirect_uri=redirect_uri,
         wristband_application_domain=os.getenv("WRISTBAND_APPLICATION_DOMAIN", ""),
-        custom_application_login_page_url=os.getenv("CUSTOM_APPLICATION_LOGIN_PAGE_URL", ""),
-        dangerously_disable_secure_cookies=to_bool(os.getenv("DANGEROUSLY_DISABLE_SECURE_COOKIES", "False")),
-        root_domain=os.getenv("ROOT_DOMAIN", ""),
+        custom_application_login_page_url=get_config_value("wristband", "custom_application_login_page_url"),
+        dangerously_disable_secure_cookies=to_bool(get_config_value("wristband", "dangerously_disable_secure_cookies")),
+        root_domain=get_config_value("wristband", "root_domain"),
         scopes=scopes_list,
-        use_custom_domains=to_bool(os.getenv("USE_CUSTOM_DOMAINS", "False")),
-        use_tenant_subdomains=to_bool(os.getenv("USE_TENANT_SUBDOMAINS", "False")),
+        use_custom_domains=to_bool(get_config_value("wristband", "use_custom_domains")),
+        use_tenant_subdomains=to_bool(get_config_value("wristband", "use_tenant_subdomains")),
     )
 
     auth = Auth(auth_config)
@@ -120,4 +134,7 @@ app: FastAPI = create_app()
 
 
 if __name__ == '__main__':
-    uvicorn.run("run:app", host='0.0.0.0', port=8080, reload=True)
+    host: str = get_config_value("app", "host")
+    host = host if host != "http://localhost" else "0.0.0.0"
+    port: int = int(get_config_value("backend", "port"))
+    uvicorn.run("run:app", host=host, port=port, reload=True)

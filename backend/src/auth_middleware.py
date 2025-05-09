@@ -15,6 +15,8 @@ from wristband.utils import CookieEncryptor, get_logger, to_bool
 # Local imports
 from src.constants import PUBLIC_PATHS
 
+from src.config_utils import get_config_value
+
 # Configure logger
 logger: logging.Logger = get_logger()
 
@@ -33,7 +35,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             
         try:
             # Get session cookie
-            session_secret_cookie: Optional[str] = os.getenv("SESSION_COOKIE_SECRET")
+            session_secret_cookie: Optional[str] = get_config_value("secrets", "session_cookie_secret")
             if session_secret_cookie is None:
                 logger.error("Missing environment variable: SESSION_COOKIE_SECRET")
                 raise ValueError("Missing environment variable: SESSION_COOKIE_SECRET")
@@ -98,7 +100,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                             session_data.to_dict()
                         )
                         
-                        secure: bool = not to_bool(os.getenv("DANGEROUSLY_DISABLE_SECURE_COOKIES", "False"))
+                        secure: bool = not to_bool(get_config_value("wristband", "dangerously_disable_secure_cookies"))
                         response.set_cookie(
                             key="session",
                             value=encrypted_session,

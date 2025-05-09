@@ -14,6 +14,8 @@ from wristband.models import CallbackResult, LogoutConfig, SessionData
 from wristband.auth import Auth
 from wristband.utils import CookieEncryptor, get_logger, to_bool
 
+from src.config_utils import get_config_value
+
 # Configure logger
 logger: logging.Logger = get_logger()
 
@@ -25,7 +27,7 @@ router = APIRouter()
 def session(request: Request) -> Response | Any:
     logger.debug("Session endpoint called")
 
-    session_secret_cookie: Optional[str] = os.getenv("SESSION_COOKIE_SECRET")
+    session_secret_cookie: Optional[str] = get_config_value("secrets", "session_cookie_secret")
     if session_secret_cookie is None:
         logger.error("Missing required environment variable: SESSION_COOKIE_SECRET")
         raise ValueError("Missing required environment variable: SESSION_COOKIE_SECRET")
@@ -72,7 +74,7 @@ def session(request: Request) -> Response | Any:
                     session_data.to_dict()
                 )
                 
-                secure: bool = not to_bool(os.getenv("DANGEROUSLY_DISABLE_SECURE_COOKIES", "False"))
+                secure: bool = not to_bool(get_config_value("wristband", "dangerously_disable_secure_cookies"))
                 response.set_cookie(
                     key="session",
                     value=encrypted_session,
@@ -123,15 +125,17 @@ def callback(request: Request) -> Response | Any:
         return callback_result.redirect_response
     
     # get app home url
-    app_home_url: str | None = os.getenv("APP_HOME_URL")
-    if app_home_url is None:
+    app_host: str | None = get_config_value("app", "host")
+    front_end_port: int | None = int(get_config_value("frontend", "port"))
+    if app_host is None or front_end_port is None:
         raise ValueError("Missing required environment variable: APP_HOME_URL")
-
+    app_home_url: str = f"{app_host}:{front_end_port}"
+    
     # create callback response
     resp: Response = auth._create_callback_response(request, app_home_url)
 
     # get session secret cookie
-    session_secret_cookie: Optional[str] = os.getenv("SESSION_COOKIE_SECRET")
+    session_secret_cookie: Optional[str] = get_config_value("secrets", "session_cookie_secret")
     if session_secret_cookie is None:
         raise ValueError("Missing required environment variable: SESSION_COOKIE_SECRET")
     
@@ -140,7 +144,7 @@ def callback(request: Request) -> Response | Any:
         raise ValueError("Missing callback data")
 
     # get secure flag
-    secure: bool = not to_bool(os.getenv("DANGEROUSLY_DISABLE_SECURE_COOKIES", "False"))
+    secure: bool = not to_bool(get_config_value("wristband", "dangerously_disable_secure_cookies"))
 
     # set session cookie
     resp.set_cookie(
@@ -160,11 +164,11 @@ def callback(request: Request) -> Response | Any:
 def logout(request: Request) -> Response | Any:
 
     # Get environment variables
-    session_secret_cookie: Optional[str] = os.getenv("SESSION_COOKIE_SECRET")
+    session_secret_cookie: Optional[str] = get_config_value("secrets", "session_cookie_secret")
     if session_secret_cookie is None:
         raise ValueError("Missing required environment variable: SESSION_COOKIE_SECRET")
     
-    secure: bool = not to_bool(os.getenv("DANGEROUSLY_DISABLE_SECURE_COOKIES", "False"))
+    secure: bool = not to_bool(get_config_value("wristband", "dangerously_disable_secure_cookies"))
 
     # Get the auth service from the current app
     auth: Auth = request.app.state.auth
@@ -177,12 +181,18 @@ def logout(request: Request) -> Response | Any:
     # Decrypt the session
     session_data: dict[str, Any] = CookieEncryptor(session_secret_cookie).decrypt(session)
 
+    app_host: str | None = get_config_value("app", "host")
+    front_end_port: int | None = int(get_config_value("frontend", "port"))
+    if app_host is None or front_end_port is None:
+        raise ValueError("Missing required environment variable: APP_HOME_URL")
+    app_home_url: str = f"{app_host}:{front_end_port}"
+
     # Logout the user
     resp: Response = auth.logout(
         req=request,
         config=LogoutConfig(
             refresh_token=session_data.get("refresh_token"),
-            redirect_url=os.getenv("APP_HOME_URL", ""), # up to developer to set
+            redirect_url=app_home_url,
             tenant_custom_domain=session_data.get("tenant_custom_domain"),
             tenant_domain_name=session_data.get("tenant_domain_name")
         )

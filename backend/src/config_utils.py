@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Any
 import yaml
 
 def load_config():
@@ -16,21 +17,20 @@ def load_config():
     
     return config
 
-def get_config_value(section, key, default=None):
+def get_config_value(section:str, key:str) -> Any:
     """
     Get a specific value from the config file
     
     Args:
         section: The section in the config file (e.g., 'backend', 'frontend')
         key: The key within the section
-        default: Default value if the key is not found
     
     Returns:
-        The value from the config or the default
+        The value from the config
     """
     config = load_config()
     
     if section in config and key in config[section]:
         return config[section][key]
     
-    return default
+    raise ValueError(f"Config value not found: {section}.{key}")

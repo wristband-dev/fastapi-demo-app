@@ -11,7 +11,7 @@ COPY backend/wristband/ /app/wristband/
 RUN pip install .
 
 # Expose port
-EXPOSE 8080
+EXPOSE 6001
 
 # Run the application
 CMD ["python", "run.py"] 
