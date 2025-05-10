@@ -14,7 +14,6 @@ from wristband.utils import CookieEncryptor, get_logger, to_bool
 
 # Local imports
 from src.constants import PUBLIC_PATHS
-
 from src.config_utils import get_config_value
 
 # Configure logger
