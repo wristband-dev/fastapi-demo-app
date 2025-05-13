@@ -52,6 +52,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             logger.debug("Attempting to decrypt session cookie")
             try:
                 session_data_dict = CookieEncryptor(session_secret_cookie).decrypt(session_cookie)
+                print(f"session_data_dict: {session_data_dict}")
                 session_data = SessionData.from_dict(session_data_dict)
                 logger.debug("Session cookie decrypted successfully")
             except Exception as e:
