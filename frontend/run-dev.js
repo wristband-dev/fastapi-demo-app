@@ -7,6 +7,7 @@ const { spawn } = require('child_process');
 const configPath = path.join(__dirname, '../config.yml');
 const DEFAULT_PORT = 3000; // Default port if not found in config or config is missing
 let port = DEFAULT_PORT;
+let appHost = 'http://localhost';
 
 try {
   if (fs.existsSync(configPath)) {
@@ -16,6 +17,10 @@ try {
       port = appConfig.frontend.port;
     } else {
       console.warn(`WARN: 'frontend.port' not found or invalid in ${configPath}. Using default port ${DEFAULT_PORT}.`);
+    }
+    
+    if (appConfig && appConfig.app && appConfig.app.host) {
+      appHost = appConfig.app.host;
     }
   } else {
     console.warn(`WARN: ${configPath} not found. Using default port ${DEFAULT_PORT}.`);
@@ -30,6 +35,11 @@ const child = spawn('next', ['dev', '-p', port.toString()], {
   stdio: 'inherit', // Inherit stdio to see Next.js output directly
   shell: true // Useful for cross-platform compatibility with 'next' command
 });
+
+// Display a clear message with the frontend URL
+console.log('\n======================================');
+console.log(`🚀 FRONTEND IS RUNNING AT: ${appHost}:${port}`);
+console.log('======================================\n');
 
 child.on('close', (code) => {
   if (code !== 0) {

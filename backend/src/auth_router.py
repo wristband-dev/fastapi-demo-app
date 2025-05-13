@@ -47,7 +47,6 @@ def session(request: Request) -> Response | Any:
         session_data_dict = CookieEncryptor(session_secret_cookie).decrypt(session)
         session_data = SessionData.from_dict(session_data_dict)
 
-        print(f"session data init asdasd: {session_data.to_session_init_data()}")
         logger.debug("Session cookie decrypted successfully")
         
         # Check if we need to refresh the token

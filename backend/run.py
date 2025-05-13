@@ -3,6 +3,7 @@ import ast
 import logging
 import os
 import uvicorn
+import argparse
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -23,20 +24,21 @@ from src.config_utils import get_config_value
 load_dotenv()
 
 def create_app() -> FastAPI:
-
     # Initialize the FastAPI app
     app = FastAPI()
 
     # SETUP LOGGING
     log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+    
     root_logger: logging.Logger = logging.getLogger()
     root_logger.setLevel(getattr(logging, log_level))
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(getattr(logging, log_level))
-    formatter = logging.Formatter("[%(asctime)s] %(levelname)s in %(name)s: %(message)s")
-    console_handler.setFormatter(formatter)
-
+    
+    # Only add handlers if none exist to prevent duplicate logging
     if not root_logger.handlers:
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(getattr(logging, log_level))
+        formatter = logging.Formatter("[%(asctime)s] %(levelname)s in %(name)s: %(message)s")
+        console_handler.setFormatter(formatter)
         root_logger.addHandler(console_handler)
 
     # Required environment variables:
@@ -125,11 +127,47 @@ def create_app() -> FastAPI:
     return app
 
 
-app: FastAPI = create_app()
+# This app instance is used when imported by Uvicorn
+app = create_app()
 
 
 if __name__ == '__main__':
-    host: str = get_config_value("app", "host")
+    # init parser
+    parser = argparse.ArgumentParser(description='Run the FastAPI application')
+
+    # add args
+    parser.add_argument('--log-level', type=str, choices=[
+            'DEBUG', 
+            'INFO', 
+            'WARNING', 
+            'ERROR', 
+            'CRITICAL'
+        ],
+        help='Set the logging level'
+    )
+    parser.add_argument('--debug', action='store_true', help='Set log level to DEBUG (overrides --log-level)')
+    parser.add_argument('--host', type=str, help='Host to bind the server to')
+    parser.add_argument('--port', type=int, help='Port to bind the server to')
+
+    # environments
+    parser.add_argument('--prod', action='store_true', help='Use the production database')
+    parser.add_argument('--dev', action='store_true', help='Use the development database')
+    
+    # parse args
+    args = parser.parse_args()
+
+    # Set the log level environment variable BEFORE app creation
+    if args.debug:
+        os.environ["LOG_LEVEL"] = "DEBUG"
+    elif args.log_level:
+        os.environ["LOG_LEVEL"] = args.log_level
+    
+    # get host and port
+    host: str = args.host if args.host else get_config_value("app", "host")
     host = host if host != "http://localhost" else "0.0.0.0"
-    port: int = int(get_config_value("backend", "port"))
-    uvicorn.run("run:app", host=host, port=port, reload=True)
+    port: int = args.port if args.port else int(get_config_value("backend", "port"))
+    
+    if args.prod:
+        uvicorn.run("run:app", host=host, port=port, reload=False)
+    else:
+        uvicorn.run("run:app", host=host, port=port, reload=True)

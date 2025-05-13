@@ -39,7 +39,7 @@ const nextConfig = {
     NEXT_PUBLIC_API_BASE_URL: apiBaseUrl,
     // Keep existing publicRuntimeConfig for now, or migrate them here too
     NEXT_PUBLIC_APP_HOST: appConfig.app?.host,
-    NEXT_PUBLIC_BACKEND_PORT: appConfig.backend?.port,
+    NEXT_PUBLIC_BACKEND_PORT: appConfig.backend?.port?.toString(),
     NEXT_PUBLIC_LOGIN_URL_SUFFIX: appConfig.backend?.login_url_suffix,
     NEXT_PUBLIC_LOGOUT_URL_SUFFIX: appConfig.backend?.logout_url_suffix,
     NEXT_PUBLIC_SESSION_URL_SUFFIX: appConfig.backend?.session_url_suffix,

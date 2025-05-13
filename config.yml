@@ -22,5 +22,3 @@ wristband:
     scopes: "openid, offline_access, email"
     use_custom_domains: "false"
     use_tenant_subdomains: "false"
-logging:
-    level: "INFO"

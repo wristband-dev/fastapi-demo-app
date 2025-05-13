@@ -119,6 +119,9 @@ npm run setup
 ## Local Start Up
 ```bash
 npm start
+
+# run in debug mode
+npm run start:debug
 ```
 [Manual Start Up](#local-start-up)
 

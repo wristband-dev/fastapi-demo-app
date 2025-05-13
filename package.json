@@ -4,7 +4,9 @@
   "description": "Full-stack application accelerator with FastAPI backend and Next.js frontend",
   "main": "index.js",
   "scripts": {
-    "start": "concurrently \"npm run database\" \"npm run backend\" \"npm run frontend\"",
+    "start": "concurrently --kill-others-on-fail --names \"database,backend,frontend\" --prefix-colors \"blue,green,yellow\" \"npm run database\" \"npm run backend\" \"sleep 3 && npm run frontend\"",
+    "start:debug": "concurrently --kill-others-on-fail --names \"database,backend,frontend\" --prefix-colors \"blue,green,yellow\" \"npm run database\" \"cd backend && python3 run.py --debug\" \"sleep 3 && npm run frontend\"",
+    "start:log": "concurrently --kill-others-on-fail --names \"database,backend,frontend\" --prefix-colors \"blue,green,yellow\" \"npm run database\" \"cd backend && python3 run.py --log-level",
     "backend": "cd backend && python3 run.py",
     "database": "node ./database/run.js",
     "frontend": "cd frontend && npm run dev",
