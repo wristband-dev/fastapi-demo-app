@@ -34,26 +34,20 @@ A full-stack application accelerator showcasing Wristband authentication integra
 ## Prerequisities
 
 **CURL**
-```bash
-apt-get update && apt-get install -y curl
-```
+
+[Curl Downloads](https://curl.se/download.html)
+
 **GIT**
-```bash
-apt-get update && apt-get install -y git
-```
+
+[Git Downloads](https://git-scm.com/downloads)
+
 **NPM**
-```bash
-curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs
-```
+
+[NPM Downloads](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+
 **PYTHON3**
-```bash
-apt-get update
-apt-get install -y software-properties-common
-add-apt-repository ppa:deadsnakes/ppa
-apt-get update
-apt-get install -y python3.11 python3.11-venv python3.11-dev
-```
+
+[Python Downloads](https://www.python.org/downloads/)
 
 
 ## Setup
