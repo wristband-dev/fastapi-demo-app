@@ -5,7 +5,6 @@ WORKDIR /app
 # Copy requirements and application code
 COPY backend/pyproject.toml backend/run.py /app/
 COPY backend/src/ /app/src/
-COPY backend/wristband/ /app/wristband/
 
 # Install pip and dependencies
 RUN pip install .

@@ -9,7 +9,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 # Wristband imports
 from wristband.models import TokenData
 from wristband.models import SessionData
-from wristband.auth import Auth
+from wristband.fastapi.auth import Auth
 from wristband.utils import CookieEncryptor, get_logger, to_bool
 
 # Local imports
