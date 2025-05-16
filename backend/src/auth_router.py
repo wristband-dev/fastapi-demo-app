@@ -11,7 +11,7 @@ from pydantic import BaseModel
 # Wristband imports
 from wristband.enums import CallbackResultType
 from wristband.models import CallbackResult, LogoutConfig, SessionData
-from wristband.auth import Auth
+from wristband.fastapi.auth import Auth
 from wristband.utils import CookieEncryptor, get_logger, to_bool
 
 from src.config_utils import get_config_value

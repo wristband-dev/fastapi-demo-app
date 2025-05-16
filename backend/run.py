@@ -9,8 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 # Wristband imports 
+from wristband.fastapi.auth import Auth
 from wristband.models import AuthConfig
-from wristband.auth import Auth
 from wristband.utils import to_bool, debug_request
 
 # Local imports
