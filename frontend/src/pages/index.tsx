@@ -2,7 +2,6 @@ import Image from "next/image";
 import { Geist, Geist_Mono } from "next/font/google";
 import { useState } from "react";
 import { useWristbandAuth, redirectToLogin, redirectToLogout, useWristbandSession } from "@wristband/react-client-auth";
-import TransactionPortal from "@/components/TransactionPortal";
 import WristbandTestComponents from "@/components/WristbandTestComponents";
 import { loginUrl, logoutUrl } from "@/lib/authConfig";
 
@@ -79,9 +78,6 @@ export default function Home() {
           <div className="flex flex-col gap-2 w-full">
             <h2 className="font-bold text-lg mt-2 mb-1">Wristband API Tests</h2>
             <WristbandTestComponents />
-            
-            <h2 className="font-bold text-lg mt-6 mb-1">Transaction Management (Firestore)</h2>
-            <TransactionPortal />
             
             <button
               onClick={handleLogout}

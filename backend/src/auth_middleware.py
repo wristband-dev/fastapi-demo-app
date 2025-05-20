@@ -51,7 +51,16 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             # Decrypt the session cookie
             logger.debug("Attempting to decrypt session cookie")
             try:
+
                 session_data_dict = CookieEncryptor(session_secret_cookie).decrypt(session_cookie)
+
+                # Fix user_info if it's a string representation of a dict
+                if 'user_info' in session_data_dict and isinstance(session_data_dict['user_info'], str):
+                    import ast
+                    try:
+                        session_data_dict['user_info'] = ast.literal_eval(session_data_dict['user_info'])
+                    except (SyntaxError, ValueError) as e:
+                        logger.error(f"Failed to parse user_info string: {e}")
 
                 session_data = SessionData.from_dict(session_data_dict)
                 logger.debug("Session cookie decrypted successfully")
