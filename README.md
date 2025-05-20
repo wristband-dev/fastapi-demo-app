@@ -91,12 +91,12 @@ LOGIN_STATE_SECRET="YOUR_LOGIN_STATE_SECRET"
 WRISTBAND_APPLICATION_DOMAIN="YOUR_WRISTBAND_APPLICATION_DOMAIN"
 ```
 
-### 4) Install dependencies
+### 4) Install dependencies & Activate Python VENV
 
 You can install all required dependencies with a single command:
 
 ```bash
-npm run setup
+npm run setup && source backend/.venv/bin/activate
 ```
 
 This will set up both the frontend and backend components.
