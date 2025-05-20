@@ -28,8 +28,6 @@ A full-stack application accelerator showcasing Wristband authentication integra
 
 - **FastAPI Backend**: A Python backend with Wristband authentication integration
 - **Next.js Frontend**: A modern React-based frontend with authentication context
-- **Firestore Database**: A NoSQL document database for storing application data with flexible schema support
-- **(OPTIONAL) Google Cloud Provider**: Integration with Google Cloud Platform for hosting and additional services
 
 ## Prerequisities
 

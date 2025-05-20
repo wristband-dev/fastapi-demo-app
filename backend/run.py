@@ -14,10 +14,8 @@ from wristband.models import AuthConfig
 from wristband.utils import to_bool, debug_request
 
 # Local imports
-from src import transaction_router
 from src import auth_router
 from src.auth_middleware import SessionAuthMiddleware
-from src.db import start_db
 from src.config_utils import get_config_value
 
 # Load environment variables
@@ -117,13 +115,8 @@ def create_app() -> FastAPI:
     # Store auth in the app state
     app.state.auth = auth
 
-    # start the db
-    start_db()
-
     # Include routers
     app.include_router(auth_router.router, prefix='/api/auth')
-    app.include_router(transaction_router.router, prefix='/api/transactions')
-    
     return app
 
 

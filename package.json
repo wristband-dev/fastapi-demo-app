@@ -4,18 +4,16 @@
   "description": "Full-stack application accelerator with FastAPI backend and Next.js frontend",
   "main": "index.js",
   "scripts": {
-    "start": "concurrently --kill-others-on-fail --names \"database,backend,frontend\" --prefix-colors \"blue,green,yellow\" \"npm run database\" \"npm run backend\" \"sleep 3 && npm run frontend\"",
-    "start:debug": "concurrently --kill-others-on-fail --names \"database,backend,frontend\" --prefix-colors \"blue,green,yellow\" \"npm run database\" \"cd backend && python3 run.py --debug\" \"sleep 3 && npm run frontend\"",
-    "start:log": "concurrently --kill-others-on-fail --names \"database,backend,frontend\" --prefix-colors \"blue,green,yellow\" \"npm run database\" \"cd backend && python3 run.py --log-level",
+    "start": "concurrently --kill-others-on-fail --names \"backend,frontend\" --prefix-colors \"green,yellow\" \"npm run backend\" \"sleep 3 && npm run frontend\"",
+    "start:debug": "concurrently --kill-others-on-fail --names \"backend,frontend\" --prefix-colors \"green,yellow\" \"cd backend && python3 run.py --debug\" \"sleep 3 && npm run frontend\"",
+    "start:log": "concurrently --kill-others-on-fail --names \"backend,frontend\" --prefix-colors \"green,yellow\" \"cd backend && python3 run.py --log-level=DEBUG\" \"sleep 3 && npm run frontend\"",
     "backend": "cd backend && python3 run.py",
-    "database": "node ./database/run.js",
     "frontend": "cd frontend && npm run dev",
     "install-all": "npm install && cd frontend && npm install",
     "setup-python": "cd backend && python3 -m venv .venv && source .venv/bin/activate && pip install -e .",
     "install-python-deps": "cd backend && pip install -e .",
     "setup": "npm install && npm run setup-python && cd frontend && npm install",
-    "install-firebase": "npm install -g firebase-tools && echo 'Firebase tools installed globally. You may need to login with: firebase login'",
-    "postinstall": "node ./database/update-firebase-port.js"
+    "install-firebase": "npm install -g firebase-tools && echo 'Firebase tools installed globally. You may need to login with: firebase login'"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
