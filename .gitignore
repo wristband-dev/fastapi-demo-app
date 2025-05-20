@@ -3,6 +3,7 @@ __pycache__
 *.DS_Store
 .cursor
 .venv
+*egg-info*
 
 node_modules
 firebase-debug.log

@@ -1,5 +1,4 @@
 <div align="center">
-  <a href="https://wristband.dev">
     <picture>
       <img src="https://assets.wristband.dev/images/email_branding_logo_v1.png" alt="Github" width="297" height="64">
     </picture>
@@ -7,6 +6,7 @@
   <p align="center">
     Enterprise-ready auth that is secure by default, truly multi-tenant, and ungated for small businesses.
   </p>
+  <a href="https://wristband.dev">
   <p align="center">
     <b>
       <a href="https://wristband.dev">Website</a> •
@@ -33,22 +33,13 @@ A full-stack application accelerator showcasing Wristband authentication integra
 
 ## Prerequisities
 
-**CURL**
-
-[Curl Downloads](https://curl.se/download.html)
-
-**GIT**
-
-[Git Downloads](https://git-scm.com/downloads)
-
 **NPM**
-
-[NPM Downloads](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+1. Visit [NPM Downloads](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) 
+2. Download 
 
 **PYTHON3**
-
-[Python Downloads](https://www.python.org/downloads/)
-
+1. Visit [Python Downloads](https://www.python.org/downloads/)
+2. Download
 
 ## Setup
 
@@ -103,7 +94,6 @@ TODO - OR just get from export file
 
 ### 4. Install Local Packages
 ```bash
-npm install
 npm run setup
 ```
 [Manual Local Package Installation](#install-local-packages)
