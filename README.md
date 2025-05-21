@@ -69,7 +69,7 @@ After your Wristband account is set up, log in to the Wristband dashboard. Once 
 1. Configure Application Domain Name
 2. Add OAuth2 Client:
    - Set platform to "Python"
-   - Set callback URL: `https://localhost:8080/api/auth/callback` (for local testing)
+   - Set callback URL: `https://localhost:6001/api/auth/callback` (for local testing)
 3. Create a tenant in Wristband
 
 You can also follow the [Demo App Guide](https://docs.wristband.dev/docs/setting-up-a-demo-app) for more information.
@@ -87,8 +87,7 @@ Then, add your Wristband configuration values:
 ```
 CLIENT_ID="YOUR_CLIENT_ID"
 CLIENT_SECRET="YOUR_CLIENT_SECRET"
-LOGIN_STATE_SECRET="YOUR_LOGIN_STATE_SECRET"
-WRISTBAND_APPLICATION_DOMAIN="YOUR_WRISTBAND_APPLICATION_DOMAIN"
+APPLICATION_VANITY_DOMAIN="YOUR_APPLICATION_VANITY_DOMAIN"
 ```
 
 ### 4) Install dependencies & Activate Python VENV
@@ -138,7 +137,7 @@ This login page is hosted by Wristband. Here, the user will be prompted to enter
 
 If users wish to directly access the Tenant-level Login Page without going through the Application-level Login Page, they can do so at:
 
-- `https://localhost:8080/api/auth/login?tenant_domain={tenant_domain}`, where `{tenant_domain}` should be replaced with the desired tenant's domain name.
+- `https://localhost:6001/api/auth/login?tenant_domain={tenant_domain}`, where `{tenant_domain}` should be replaced with the desired tenant's domain name.
 
 This login page is hosted by Wristband. Here, the user will be prompted to enter their credentials to login to the application.
 
@@ -148,7 +147,6 @@ This demo app consists of:
 
 - **FastAPI Backend**: A Python backend with Wristband authentication integration
 - **Next.js Frontend**: A modern React-based frontend with authentication context
-- **Firestore Database**: For storing application data
 
 The backend handles all authentication flows, including:
 - Storing client ID and secret

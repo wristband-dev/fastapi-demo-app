@@ -17,7 +17,7 @@ try {
 
 // Construct the backend URL from the loaded config
 const appHost = appConfig.app?.host;
-const backendPort = appConfig.backend?.port; // Default to 8080 if not found
+const backendPort = appConfig.backend?.port; // Default to 6001 if not found
 const backendUrl = `${appHost}:${backendPort}`;
 const apiBaseUrl = `${backendUrl}/api`; // For client-side use
 
