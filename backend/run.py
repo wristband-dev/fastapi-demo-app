@@ -81,10 +81,9 @@ def create_app() -> FastAPI:
         wristband_application_vanity_domain=os.getenv("APPLICATION_VANITY_DOMAIN", ""),
         custom_application_login_page_url=get_config_value("wristband", "custom_application_login_page_url"),
         dangerously_disable_secure_cookies=to_bool(get_config_value("wristband", "dangerously_disable_secure_cookies")),
-        root_domain=get_config_value("wristband", "root_domain"),
+        parse_tenant_from_root_domain=get_config_value("wristband", "root_domain"),
         scopes=scopes_list,
-        use_custom_domains=to_bool(get_config_value("wristband", "use_custom_domains")),
-        use_tenant_subdomains=to_bool(get_config_value("wristband", "use_tenant_subdomains")),
+        is_application_custom_domain_active=to_bool(get_config_value("wristband", "use_custom_domains")),
     )
 
     auth = Auth(auth_config)
