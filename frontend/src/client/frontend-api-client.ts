@@ -9,7 +9,7 @@ const JSON_MEDIA_TYPE = 'application/json;charset=UTF-8';
 
 // Extract key values from publicRuntimeConfig
 // Provide defaults if values might be undefined at build time but available at runtime
-const appHost = publicRuntimeConfig.appHost || 'http://localhost:3000'; // Default, if not set
+const appHost = publicRuntimeConfig.appHost || 'http://localhost:3001'; // Default, if not set
 const backendPort = publicRuntimeConfig.backendPort || 8000; // Default, if not set
 
 const defaultOptions = {

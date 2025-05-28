@@ -5,7 +5,7 @@ const { spawn } = require('child_process');
 
 // Path to config.yml, assuming it's in the parent directory of 'frontend'
 const configPath = path.join(__dirname, '../config.yml');
-const DEFAULT_PORT = 3000; // Default port if not found in config or config is missing
+const DEFAULT_PORT = 3001; // Default port if not found in config or config is missing
 let port = DEFAULT_PORT;
 let appHost = 'http://localhost';
 

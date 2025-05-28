@@ -5,6 +5,7 @@ __pycache__
 .venv
 *egg-info*
 
+.vscode
 backend/poetry.lock
 
 node_modules
