@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from wristband.enums import CallbackResultType
 from wristband.models import CallbackResult, LogoutConfig, SessionData
 from wristband.fastapi.auth import Auth
-from wristband.utils import CookieEncryptor, get_logger, to_bool
+from wristband.utils import CookieEncryptor, get_logger, to_bool, create_csrf_token
 
 from src.config_utils import get_config_value
 
@@ -21,6 +21,26 @@ logger: logging.Logger = get_logger()
 
 # Initialize router
 router = APIRouter()
+
+# Custom function to update CSRF cookie
+def update_csrf_cookie(csrf_token: str, response: Response, secure: bool = True) -> None:
+    """Updates the CSRF cookie with the provided CSRF token.
+    
+    Args:
+        csrf_token: The CSRF token to set in the cookie
+        response: The FastAPI response object for setting the cookie
+        secure: Whether to set the secure flag on the cookie
+    """
+    if csrf_token:
+        response.set_cookie(
+            key="CSRF-TOKEN",
+            value=csrf_token,
+            httponly=False,  # Must be False so frontend JavaScript can access the value
+            max_age=1800,    # 30 minutes in seconds
+            path="/",
+            samesite="lax",  # Equivalent to sameSite: true in JS
+            secure=secure
+        )
 
 # TODO - clean up session logic (401 on no session)
 @router.route('/session', methods=['GET', 'POST'])
@@ -145,16 +165,25 @@ def callback(request: Request) -> Response | Any:
     # get secure flag
     secure: bool = not to_bool(get_config_value("wristband", "dangerously_disable_secure_cookies"))
 
-    # set session cookie
+    # update csrf token
+    # Create CSRF token
+    csrf_token = create_csrf_token()
+    
+    # Get the session data dictionary
+    session_data = callback_result.callback_data.to_session()
+    
+    # We can't add csrfToken directly to SessionData, so we need to add it separately
+    # Set session cookie with SessionData only
     resp.set_cookie(
         key="session",
-        value=CookieEncryptor(session_secret_cookie).encrypt(
-            callback_result.callback_data.to_session()
-        ),
+        value=CookieEncryptor(session_secret_cookie).encrypt(session_data),
         secure=secure,
         httponly=True,
         samesite="lax"
     )
+    
+    # Set a separate CSRF token cookie
+    update_csrf_cookie(csrf_token, resp, secure)
 
     # return response
     return resp
@@ -203,6 +232,16 @@ def logout(request: Request) -> Response | Any:
         value='',
         secure=secure,
         httponly=True,
+        samesite="lax",
+        max_age=0
+    )
+
+    # Clear the CSRF token cookie
+    resp.set_cookie(
+        key="CSRF-TOKEN",
+        value='',
+        secure=secure,
+        httponly=False,
         samesite="lax",
         max_age=0
     )

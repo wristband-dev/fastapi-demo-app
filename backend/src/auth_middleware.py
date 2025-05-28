@@ -15,6 +15,7 @@ from wristband.utils import CookieEncryptor, get_logger, to_bool
 # Local imports
 from src.constants import PUBLIC_PATHS
 from src.config_utils import get_config_value
+from src.auth_router import update_csrf_cookie
 
 # Configure logger
 logger: logging.Logger = get_logger()
@@ -101,6 +102,24 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                         # Set the request state with session data for usage in route handlers
                         request.state.session_data = session_data
                         
+                        # CSRF validation
+                        # Skip CSRF validation for safe methods (GET, HEAD, OPTIONS)
+                        if request.method not in ["GET", "HEAD", "OPTIONS"]:
+                            # Get CSRF token from cookie
+                            csrf_cookie = request.cookies.get("CSRF-TOKEN")
+                            # Get CSRF token from header
+                            header_csrf_token = request.headers.get("X-CSRF-Token")
+                            
+                            # Validate CSRF token
+                            if not csrf_cookie or not header_csrf_token or csrf_cookie != header_csrf_token:
+                                logger.warning(f"CSRF token validation failed for request to {path}")
+                                return JSONResponse(
+                                    status_code=status.HTTP_403_FORBIDDEN,
+                                    content={"detail": "CSRF token validation failed"}
+                                )
+                            
+                            logger.debug("CSRF token validation successful")
+                        
                         # Execute the route handler
                         response: Response = await call_next(request)
                         
@@ -138,7 +157,29 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             # Token is valid, set session data in request state for use in route handlers
             logger.debug(f"Authentication successful for request to {path}")
             request.state.session_data = session_data
-            return await call_next(request)
+            
+            # CSRF validation
+            # Skip CSRF validation for safe methods (GET, HEAD, OPTIONS)
+            if request.method not in ["GET", "HEAD", "OPTIONS"]:
+                # Get CSRF token from cookie
+                csrf_cookie = request.cookies.get("CSRF-TOKEN")
+                # Get CSRF token from header
+                header_csrf_token = request.headers.get("X-CSRF-Token")
+                
+                # Validate CSRF token
+                if not csrf_cookie or not header_csrf_token or csrf_cookie != header_csrf_token:
+                    logger.warning(f"CSRF token validation failed for request to {path}")
+                    return JSONResponse(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        content={"detail": "CSRF token validation failed"}
+                    )
+                
+                logger.debug("CSRF token validation successful")
+            
+            # Execute the route handler
+            response: Response = await call_next(request)
+            
+            return response
             
         except Exception as e:
             logger.exception(f"Session middleware error: {str(e)}")
