@@ -19,5 +19,5 @@ export const FORM_URLENCOED_MEDIA_TYPE: string = 'application/x-www-form-urlenco
 export const VIP_HOST_ROLE_NAME = 'vip-host';
 
 // CSRF constants
-export const CSRF_TOKEN_COOKIE_NAME = 'XSRF-TOKEN';
-export const CSRF_TOKEN_HEADER_NAME = 'x-xsrf-token';
+export const CSRF_TOKEN_COOKIE_NAME = 'CSRF-TOKEN';
+export const CSRF_TOKEN_HEADER_NAME = 'X-CSRF-TOKEN';

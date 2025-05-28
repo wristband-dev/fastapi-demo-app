@@ -1,10 +1,17 @@
+/**
+ * Home Page
+ * 
+ * This is the main page of the application. It handles authentication status
+ * and provides UI for login, logout and testing Wristband functionality.
+ */
 import Image from "next/image";
 import { Geist, Geist_Mono } from "next/font/google";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWristbandAuth, redirectToLogin, redirectToLogout, useWristbandSession } from "@wristband/react-client-auth";
 import WristbandTestComponents from "@/components/WristbandTestComponents";
 import { loginUrl, logoutUrl } from "@/lib/authConfig";
 
+// Load fonts
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -17,23 +24,49 @@ const geistMono = Geist_Mono({
 
 export default function Home() {
   const [logoutMessage, setLogoutMessage] = useState<string | null>(null);
-  const { isAuthenticated, isLoading} = useWristbandAuth();
+  const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated, isLoading } = useWristbandAuth();
   const { metadata } = useWristbandSession();
 
+  /**
+   * Handles user logout by redirecting to the logout URL
+   */
   const handleLogout = () => {
-    setLogoutMessage("Logging out...");
-    redirectToLogout(logoutUrl);
+    try {
+      setLogoutMessage("Logging out...");
+      redirectToLogout(logoutUrl);
+    } catch (err) {
+      setError("Failed to log out. Please try again.");
+      console.error("Logout error:", err);
+    }
   };
 
+  /**
+   * Handles user login by redirecting to the login URL
+   */
   const handleLogin = () => {
-    redirectToLogin(loginUrl);
+    try {
+      redirectToLogin(loginUrl);
+    } catch (err) {
+      setError("Failed to redirect to login. Please try again.");
+      console.error("Login error:", err);
+    }
   };
+
+  // Clear error message after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   return (
     <div
       className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
     >
       <main className="flex flex-col gap-8 row-start-2 items-center w-full max-w-2xl">
+        {/* Header */}
         <div className="flex items-center">
           <Image
             src="/wristband_logo_dark.svg"
@@ -43,13 +76,25 @@ export default function Home() {
             priority
           />
         </div>
+
+        {/* Error/Info Messages */}
+        {error && (
+          <div className="p-4 bg-red-100 dark:bg-red-900 rounded w-full text-center">
+            <p>{error}</p>
+          </div>
+        )}
+        
         {logoutMessage && (
           <div className="p-4 bg-blue-100 dark:bg-blue-900 rounded w-full text-center">
             <p>{logoutMessage}</p>
           </div>
         )}
+
+        {/* Authentication Status */}
         {isLoading ? (
-          <p>Loading session...</p>
+          <div className="p-4 bg-gray-100 dark:bg-gray-900 rounded w-full text-center">
+            <p>Loading session...</p>
+          </div>
         ) : isAuthenticated && metadata ? (
           <div className="p-4 bg-green-100 dark:bg-green-900 rounded w-full">
             <p className="font-bold mb-2">Session active:</p>
@@ -64,6 +109,7 @@ export default function Home() {
           </div>
         )}
 
+        {/* Login Button */}
         {!isAuthenticated && (
           <div className="flex flex-col gap-2 w-full">
             <button
@@ -74,6 +120,8 @@ export default function Home() {
             </button>
           </div>
         )}
+
+        {/* Authenticated User Options */}
         {isAuthenticated && (
           <div className="flex flex-col gap-2 w-full">
             <h2 className="font-bold text-lg mt-2 mb-1">Wristband API Tests</h2>
@@ -89,6 +137,7 @@ export default function Home() {
         )}
       </main>
       <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
+        {/* Footer content if needed */}
       </footer>
     </div>
   );
