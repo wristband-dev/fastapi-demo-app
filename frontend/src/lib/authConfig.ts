@@ -15,7 +15,7 @@ const appHost = publicRuntimeConfig.appHost || 'http://localhost';
 const backendPort = publicRuntimeConfig.backendPort || '8001';
 const loginUrlSuffix = publicRuntimeConfig.loginUrlSuffix || 'api/auth/login';
 const logoutUrlSuffix = publicRuntimeConfig.logoutUrlSuffix || 'api/auth/logout';
-const sessionUrlSuffix = publicRuntimeConfig.sessionUrlSuffix || 'api/auth/session';
+const sessionUrlSuffix = publicRuntimeConfig.sessionUrlSuffix || 'api/session';
 
 // Build auth URLs
 export const loginUrl = `${appHost}:${backendPort}/${loginUrlSuffix}`;

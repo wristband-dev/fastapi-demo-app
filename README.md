@@ -19,11 +19,9 @@
 
 ---
 
-# Wristband Python FastAPI Accelerator
+# Wristband Multi-Tenant Demo App for FastAPI (Python)
 
-This repo contains a full-stack application accelerator showcasing Wristband authentication integration with a FastAPI backend and Next.js frontend. This repository provides a production-ready foundation for building secure, multi-tenant web applications with enterprise-grade authentication.
-
-When an unauthenticated user attempts to access the frontend, it will redirect to the FastAPI backend's Login Endpoint, which in turn redirects the user to Wristband to authenticate. Wristband then redirects the user back to your application's Callback Endpoint which sets a session cookie before returning the user's browser to the frontend project.
+This repo contains a demo app showcasing Wristband authentication integration with a FastAPI backend and Next.js frontend. When an unauthenticated user attempts to access the frontend, it will redirect to the FastAPI backend's Login Endpoint, which in turn redirects the user to Wristband to authenticate. Wristband then redirects the user back to your application's Callback Endpoint which sets a session cookie before returning the user's browser to the frontend project.
 
 <br>
 <hr />
@@ -46,7 +44,7 @@ python --version # Should show Python 3.x.x
 2. Download and install the appropriate version for your OS
 3. Verify the installation by opening a terminal or command prompt and running:
 ```bash
-node --version # Should show v16.x.x or higher
+node --version # Should show v18.x.x or higher
 npm --version  # Should show v8.x.x or higher
 ```
 
@@ -64,38 +62,29 @@ First, make sure you sign up for a Wristband account at [https://wristband.dev](
 
 ### 2) Provision the FastAPI demo application in the Wristband Dashboard
 
-After your Wristband account is set up, log in to the Wristband dashboard. Once you land on the home page of the dashboard, create a new application:
+After your Wristband account is set up, log in to the Wristband dashboard.  Once you land on the home page of the dashboard, click the button labelled "Add Demo App".  Make sure you choose the following options:
 
-1. Configure Application Domain Name
-2. Add OAuth2 Client:
-   - Set platform to "Python"
-   - Set callback URL: `https://localhost:6001/api/auth/callback` (for local testing)
-3. Create a tenant in Wristband
+- Step 1: Subject to Authenticate - Humans
+- Step 2: Application Framework - FastAPI (Python)
 
 You can also follow the [Demo App Guide](https://docs.wristband.dev/docs/setting-up-a-demo-app) for more information.
 
 ### 3) Apply your Wristband configuration values
 
-After completing application creation, you will need to configure environment variables. Create a file named `.env` in the project root by copying the example file:
+After completing demo app creation, you will be prompted with values that you should use to create environment variables for the Express server. You should see:
 
-```bash
-cp .env.example .env
-```
+- `APPLICATION_VANITY_DOMAIN`
+- `CLIENT_ID`
+- `CLIENT_SECRET`
 
-Then, add your Wristband configuration values:
-
-```
-CLIENT_ID="YOUR_CLIENT_ID"
-CLIENT_SECRET="YOUR_CLIENT_SECRET"
-APPLICATION_VANITY_DOMAIN="YOUR_APPLICATION_VANITY_DOMAIN"
-```
+Copy those values, then create an environment variable file for the FastAPI server at: `server/.env`. Once created, paste the copied values into this file.
 
 ### 4) Install dependencies & Activate Python VENV
 
 You can install all required dependencies with a single command:
 
 ```bash
-npm run setup && source backend/.venv/bin/activate
+npm run setup
 ```
 
 This will set up both the frontend and backend components.

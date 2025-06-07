@@ -7,27 +7,21 @@
  */
 import axios from 'axios';
 import getConfig from 'next/config';
+import { redirectToLogin } from '@wristband/react-client-auth';
+
 import { loginUrl } from '@/lib/authConfig';
-import { 
-  JSON_MEDIA_TYPE, 
-  CSRF_TOKEN_COOKIE_NAME, 
-  CSRF_TOKEN_HEADER_NAME 
-} from '@/utils/contstants';
 
+const JSON_MEDIA_TYPE = 'application/json;charset=UTF-8';
 const { publicRuntimeConfig } = getConfig() || { publicRuntimeConfig: {} };
-
-// Extract key values from publicRuntimeConfig
-// Provide defaults if values might be undefined at build time but available at runtime
-const appHost = publicRuntimeConfig.appHost || 'http://localhost:3001'; // Default, if not set
-const backendPort = publicRuntimeConfig.backendPort || 8000; // Default, if not set
+const { appHost, backendPort } = publicRuntimeConfig;
 
 const defaultOptions = {
   // Set up baseURL based on the app host and backend port from publicRuntimeConfig
   baseURL: `${appHost}:${backendPort}/api`,
   headers: { 'Content-Type': JSON_MEDIA_TYPE, Accept: JSON_MEDIA_TYPE },
   // CSRF protection configuration
-  xsrfCookieName: CSRF_TOKEN_COOKIE_NAME,
-  xsrfHeaderName: CSRF_TOKEN_HEADER_NAME,
+  xsrfCookieName: 'CSRF-TOKEN',
+  xsrfHeaderName: 'X-CSRF-TOKEN',
   withCredentials: true, // Include cookies in requests (needed for both authentication and CSRF)
 };
 
@@ -35,9 +29,8 @@ const frontendApiClient = axios.create(defaultOptions);
 
 // Unauthorized access interceptor to handle 401 or 403 responses
 const unauthorizedAccessInterceptor = (error: unknown) => {
-  if (axios.isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403)) {
-    // Redirect to login page
-    window.location.href = loginUrl;
+  if (axios.isAxiosError(error) && [401, 403].includes(error.response?.status!)) {
+    redirectToLogin(loginUrl);
     return Promise.reject(error);
   }
   
@@ -45,9 +38,6 @@ const unauthorizedAccessInterceptor = (error: unknown) => {
 };
 
 // Add the interceptor to the client
-frontendApiClient.interceptors.response.use(
-  (response) => response, // Pass successful responses through
-  unauthorizedAccessInterceptor // Handle errors
-);
+frontendApiClient.interceptors.response.use((response) => response, unauthorizedAccessInterceptor);
 
 export default frontendApiClient;

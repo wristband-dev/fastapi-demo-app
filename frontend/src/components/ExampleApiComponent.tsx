@@ -48,7 +48,7 @@ export default function ExampleApiComponent() {
     try {
       setDirectLoading(true);
       setDirectError(null);
-      const response = await frontendApiClient.get('/auth/session');
+      const response = await frontendApiClient.get('/session');
       setDirectResponse(response.data);
     } catch (error) {
       console.error('Direct API call error:', error);

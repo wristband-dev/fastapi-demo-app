@@ -9,8 +9,6 @@ __pycache__
 backend/poetry.lock
 
 node_modules
-firebase-debug.log
-firestore-debug.log
 package-lock.json
 
 # dependencies

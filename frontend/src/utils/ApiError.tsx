@@ -5,6 +5,7 @@
  */
 import axios from 'axios';
 import { loginUrl } from '@/lib/authConfig';
+import { redirectToLogin } from '@wristband/react-client-auth';
 
 /**
  * Custom API error class to standardize error handling
@@ -38,7 +39,7 @@ export const handleApiError = (error: unknown, customErrorHandler?: (error: unkn
     // Handle authentication errors
     if (error.response?.status === 401 || error.response?.status === 403) {
       // Redirect to login page
-      window.location.href = loginUrl;
+      redirectToLogin(loginUrl);
       return new ApiError('Authentication required', error.response.status, error.response.data);
     }
 

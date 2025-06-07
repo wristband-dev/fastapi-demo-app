@@ -22,7 +22,7 @@ export default function WristbandTestComponents() {
       setError(null);
       
       // Using our API client with CSRF protection instead of fetch
-      const res = await frontendApiClient.get('/auth/test_decrypt_cookie');
+      const res = await frontendApiClient.get('/test_decrypt_cookie');
       setResponse(JSON.stringify(res.data));
     } catch (error) {
       // Use our standardized error handling

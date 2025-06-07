@@ -15,7 +15,7 @@ async function getSession() {
   try {
     // The API client already has withCredentials set to true
     // and includes CSRF protection
-    const response = await frontendApiClient.get(`/auth/session`, {
+    const response = await frontendApiClient.get(`/session`, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         Pragma: 'no-cache',

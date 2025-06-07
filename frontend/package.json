@@ -1,18 +1,22 @@
 {
-  "name": "wb-python-fastapi-accelerator-frontend",
+  "name": "fastapi-demo-app--frontend",
+  "description": "NextJS frontend client that interacts with the Python FastAPI server and uses the Wristband react-client-auth SDK.",
+  "author": "Wristband",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=18.12.1",
+    "npm": ">=8.19.2"
+  },
   "scripts": {
-    "dev": "node run-dev.js",
+    "dev": "node scripts/run-dev.js",
     "build": "next build",
-    "build:staging": "NEXT_PUBLIC_ENV=staging NEXT_PUBLIC_API_URL=https://wb-python-fastapi-accelerator-staging-pqjww7ycdq-uc.a.run.app next build",
-    "build:production": "NEXT_PUBLIC_ENV=production NEXT_PUBLIC_API_URL=https://wb-python-fastapi-accelerator-production-pqjww7ycdq-uc.a.run.app next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
-    "@wristband/react-client-auth": "^0.3.0",
-    "axios": "^1.6.2",
+    "@wristband/react-client-auth": "^1.0.0",
+    "axios": "^1.9.0",
     "next": "^15.3.2",
     "react": "^18",
     "react-dom": "^18",
