@@ -29,15 +29,15 @@ def create_app() -> FastAPI:
         formatter = logging.Formatter("[%(asctime)s] %(levelname)s in %(name)s: %(message)s")
         console_handler.setFormatter(formatter)
         root_logger.addHandler(console_handler)
-
-    # Check if any required env vars are missing
-    required_env_vars: list[str] = ["CLIENT_ID", "CLIENT_SECRET", "APPLICATION_VANITY_DOMAIN"]
-    missing_vars: list[str] = [var for var in required_env_vars if not os.getenv(var)]
-    if missing_vars:
-        raise ValueError(f"Missing required environment variables: {missing_vars}")
     
     # Add CORS middleware
-    app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_credentials=True,allow_methods=["*"],allow_headers=["*"])
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:3001"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"]
+    )
 
     # Store Wristband Auth instance in the app state
     app.state.auth = create_wristband_auth()

@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Request, Response, status
 from fastapi.responses import JSONResponse
 
-from wristband.models import SessionData
 from wristband.utils import get_logger
 
+from models.session_data import SessionData
 from utils.session import get_session_data
 
 router = APIRouter()

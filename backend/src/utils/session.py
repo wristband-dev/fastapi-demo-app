@@ -5,7 +5,9 @@ import logging
 
 # Wristband imports
 from wristband.utils import CookieEncryptor, get_logger
-from wristband.models import SessionData
+
+# Local imports
+from models.session_data import SessionData
 
 session_cookie_secret = "a8f5f167f44f4964e6c998dee827110c"
 
@@ -33,8 +35,15 @@ def get_session_data(request: Request) -> SessionData | None:
         raise ValueError("Unable to decrypt session cookie")
 
 def update_session_cookie(response: Response, session_data: SessionData, secure: bool) -> None:
-    encrypted_session: str = CookieEncryptor(session_cookie_secret).encrypt(session_data)
-    response.set_cookie(key="session",value=encrypted_session,max_age=1800,secure=secure,httponly=True,samesite="lax")
+    encrypted_session: str = CookieEncryptor(session_cookie_secret).encrypt(session_data.to_dict())
+    response.set_cookie(
+        key="session",
+        value=encrypted_session,
+        max_age=1800,
+        secure=secure,
+        httponly=True,
+        samesite="lax"
+    )
 
 def delete_session_cookie(response: Response, secure: bool) -> None:
     response.set_cookie("session", value='', max_age=0, secure=secure, httponly=True, samesite="lax")

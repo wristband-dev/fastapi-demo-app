@@ -6,11 +6,11 @@ import logging
 
 # Wristband imports
 from wristband.models import TokenData
-from wristband.models import SessionData
 from wristband.fastapi.auth import Auth
 from wristband.utils import get_logger
 
 # Local imports
+from models.session_data import SessionData
 from utils.session import get_session_data, update_session_cookie
 
 logger: logging.Logger = get_logger()
@@ -31,15 +31,14 @@ class AuthMiddleware(BaseHTTPMiddleware):
             logger.error("No authenticated session found.")
             return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"detail": "No authenticated session found."})
             
-        # Check if access token exists
-        if not session_data.access_token:
-            logger.warning("No access token found in session data")
-            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"detail": "No access token in session"})
+        # Check is_authenticated
+        if not session_data.is_authenticated:
+            logger.warning("User is not authenticated")
+            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"detail": "Unauthorized"})
         
         # Validate CSRF token
-        csrf_cookie = request.cookies.get("CSRF-TOKEN")
         header_csrf_token = request.headers.get("X-CSRF-TOKEN")
-        if not csrf_cookie or not header_csrf_token or csrf_cookie != header_csrf_token:
+        if not session_data.csrf_token or not header_csrf_token or session_data.csrf_token != header_csrf_token:
             logger.warning(f"CSRF token validation failed for request to {path}")
             return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={"detail": "CSRF validation failed"})
         logger.debug("CSRF token validation successful")
