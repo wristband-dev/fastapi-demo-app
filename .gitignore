@@ -9,7 +9,6 @@ __pycache__
 backend/poetry.lock
 
 node_modules
-package-lock.json
 
 # dependencies
 frontend/node_modules
