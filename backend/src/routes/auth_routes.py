@@ -1,39 +1,32 @@
 # Standard library imports
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Request
 from fastapi import Request
 from fastapi.routing import APIRouter
 from fastapi.responses import Response
-import logging
 
 # Wristband imports
-from wristband.enums import CallbackResultType
-from wristband.models import CallbackResult, LogoutConfig
-from wristband.fastapi.auth import Auth
-from wristband.utils import get_logger, create_csrf_token
+from wristband.models import CallbackResult, CallbackData, LogoutConfig, CallbackResultType
 
 # Local imports
+from auth.wristband import wristband_auth
 from models.session_data import SessionData
-from utils.csrf import delete_csrf_cookie, update_csrf_cookie
-from utils.session import delete_session_cookie, get_session_data, update_session_cookie
+from utils.csrf import create_csrf_token, delete_csrf_cookie, update_csrf_cookie
+from utils.session import delete_session_cookie, update_session_cookie
 
-logger: logging.Logger = get_logger()
 router = APIRouter()
 
 
 @router.get('/login')
 def login(request: Request) -> Response:
-    auth: Auth = request.app.state.auth
-
     # Construct the authorize request URL and redirect to the Wristband Authorize Endpoint
-    resp: Response = auth.login(req=request)
+    resp: Response = wristband_auth.login(req=request)
     return resp
 
 @router.get('/callback')
 def callback(request: Request) -> Response:
-    auth: Auth = request.app.state.auth
-
     # get callback result
-    callback_result: CallbackResult = auth.callback(req=request)
+    callback_result: CallbackResult = wristband_auth.callback(req=request)
 
     # if redirect required, return redirect response
     if callback_result.type == CallbackResultType.REDIRECT_REQUIRED and callback_result.redirect_response:
@@ -41,42 +34,49 @@ def callback(request: Request) -> Response:
     
     if not callback_result.callback_data:
         raise ValueError("Callback data unexpectedly set to None")
-    
-    # create callback response
-    resp: Response = auth._create_callback_response(request, "http://localhost:3001")
 
     # CSRF_TOUCHPOINT
     # Create CSRF token to store in both session and CSRF cookies
     csrf_token = create_csrf_token()
-    update_csrf_cookie(csrf_token, resp, False)
     
-    # Set session cookie
-    session_data: SessionData = SessionData.from_callback_result_data(callback_result.callback_data, csrf_token)
-    update_session_cookie(resp, session_data, False)
+    # Create session data for the authenticated user
+    callback_data: CallbackData = callback_result.callback_data
+    session_data: SessionData = SessionData(
+        is_authenticated=True,
+        access_token=callback_data.access_token,
+        # Convert the "expiresIn" seconds into milliseconds from the epoch.
+        expires_at=int((datetime.now() + timedelta(seconds=callback_data.expires_in)).timestamp() * 1000),
+        refresh_token=callback_data.refresh_token or None,
+        user_id=callback_data.user_info['sub'],
+        tenant_id=callback_data.user_info['tnt_id'],
+        idp_name=callback_data.user_info['idp_name'],
+        tenant_domain_name=callback_data.tenant_domain_name,
+        tenant_custom_domain=callback_data.tenant_custom_domain or None,
+        csrf_token=csrf_token,
+    )
 
-    # return response
+    # Create the callback response that sets the session and CSRF cookies.
+    resp: Response = wristband_auth._create_callback_response(request, "http://localhost:3001")
+    update_session_cookie(resp, session_data)
+    update_csrf_cookie(resp, csrf_token)
     return resp
 
 @router.get('/logout')
 def logout(request: Request) -> Response:
-    auth: Auth = request.app.state.auth
-
-    # Get the user's session
-    session_data: SessionData | None = get_session_data(request)
+    session_data: SessionData = request.state.session
 
     # Log out the user and redirect to the Wristband Logout Endpoint
-    resp: Response = auth.logout(
+    resp: Response = wristband_auth.logout(
         req=request,
         config=LogoutConfig(
             refresh_token=session_data.refresh_token if session_data else None,
             tenant_custom_domain=session_data.tenant_custom_domain if session_data else None,
             tenant_domain_name=session_data.tenant_domain_name if session_data else None,
-            redirect_url="http://localhost:3001",
         )
     )
 
     # Delete the session and CSRF cookies.
-    delete_session_cookie(resp, False)
-    delete_csrf_cookie(resp, False)
+    delete_session_cookie(resp)
+    delete_csrf_cookie(resp)
 
     return resp

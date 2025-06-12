@@ -1,14 +1,11 @@
 from fastapi.responses import Response
+import secrets
 
-# Custom function to update CSRF cookie
-def update_csrf_cookie(csrf_token: str, response: Response, secure: bool = True) -> None:
-    """Updates the CSRF cookie with the provided CSRF token.
-    
-    Args:
-        csrf_token: The CSRF token to set in the cookie
-        response: The FastAPI response object for setting the cookie
-        secure: Whether to set the secure flag on the cookie
-    """
+# CSRF_TOUCHPOINT
+def create_csrf_token() -> str:
+    return secrets.token_hex(32)
+
+def update_csrf_cookie(response: Response, csrf_token: str) -> None:
     if not csrf_token:
         raise ValueError('[csrf_token] cannot be None')
     
@@ -19,8 +16,9 @@ def update_csrf_cookie(csrf_token: str, response: Response, secure: bool = True)
         max_age=1800,    # 30 minutes in seconds
         path="/",
         samesite="lax",  # Equivalent to sameSite: true in JS
-        secure=secure
+        secure=False # IMPORTANT: Set secure=True in Production!!!
     )
 
-def delete_csrf_cookie(response: Response, secure: bool) -> None:
-    response.set_cookie("CSRF-TOKEN", value='', max_age=0, secure=secure, httponly=False, samesite="lax")
+def delete_csrf_cookie(response: Response) -> None:
+    # IMPORTANT: Set secure=True in Production!!!
+    response.set_cookie("CSRF-TOKEN", value='', max_age=0, secure=False, httponly=False, samesite="lax")

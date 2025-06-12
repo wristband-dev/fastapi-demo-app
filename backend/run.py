@@ -1,36 +1,48 @@
 # Standard library imports
-import logging
-import os
-import uvicorn
-import argparse
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+import logging
+import uvicorn
 
-# Local imports
-from auth.wristband_auth import create_wristband_auth
-from middleware.auth_middleware import AuthMiddleware
-from routes import router as all_routes
-
-# Load environment variables
+# Load environment variables BEFORE local imports
 load_dotenv()
 
+# Local imports
+from middleware.auth_middleware import AuthMiddleware
+from middleware.session_middleware import SimpleSessionMiddleware
+from routes import router as all_routes
+
 def create_app() -> FastAPI:
-    # Initialize the FastAPI app
     app = FastAPI()
 
-    # Set up logging (Only add handlers if none exist to prevent duplicate logging)
-    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
-    root_logger: logging.Logger = logging.getLogger()
-    root_logger.setLevel(getattr(logging, log_level))
-    if not root_logger.handlers:
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(getattr(logging, log_level))
-        formatter = logging.Formatter("[%(asctime)s] %(levelname)s in %(name)s: %(message)s")
-        console_handler.setFormatter(formatter)
-        root_logger.addHandler(console_handler)
-    
-    # Add CORS middleware
+    # Set up logging
+    if not logging.getLogger().hasHandlers():
+        logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s in %(name)s: %(message)s")
+
+    ########################################################################################
+    # IMPORTANT: FastAPI middleware runs in reverse order of the way it is added below!!
+    ########################################################################################
+
+    # 1) Add the auth middleware to the app  
+    app.add_middleware(AuthMiddleware)
+
+    # 2) Add simple session middleware
+    app.add_middleware(SimpleSessionMiddleware)
+    # https://www.starlette.io/middleware/#sessionmiddleware
+    # Add session middleware FIRST (makes request.session available)
+    # app.add_middleware(
+    #     EncryptedSessionMiddleware,
+    #     cookie_name="session",
+    #     secret_key="a8f5f167f44f4964e6c998dee827110c",
+    #     session_type=SessionData,  # Add this for typed sessions
+    #     max_age=1800,  # 30 minutes
+    #     path="/",
+    #     same_site="lax",
+    #     http_only=False,  # Set to True in production
+    # )
+
+    # 3) Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:3001"],
@@ -38,12 +50,6 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"]
     )
-
-    # Store Wristband Auth instance in the app state
-    app.state.auth = create_wristband_auth()
-
-    # Add the auth middleware to the app
-    app.add_middleware(AuthMiddleware)
     
     # Include API routers
     app.include_router(all_routes)
@@ -54,24 +60,4 @@ def create_app() -> FastAPI:
 app = create_app()
 
 if __name__ == '__main__':
-    # init parser
-    parser = argparse.ArgumentParser(description='Run the FastAPI application')
-
-    # add args
-    parser.add_argument('--log-level', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Set the logging level')
-    parser.add_argument('--debug', action='store_true', help='Set log level to DEBUG (overrides --log-level)')
-    parser.add_argument('--host', type=str, help='Host to bind the server to')
-    parser.add_argument('--port', type=int, help='Port to bind the server to')
-
-    # parse args
-    args = parser.parse_args()
-
-    # Set the log level environment variable BEFORE app creation
-    if args.debug:
-        os.environ["LOG_LEVEL"] = "DEBUG"
-    elif args.log_level:
-        os.environ["LOG_LEVEL"] = args.log_level
-
-    # Run the app
-    # hot_reload: bool = False if args.prod else True
     uvicorn.run("run:app", host="localhost", port=6001, reload=True)

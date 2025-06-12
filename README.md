@@ -21,7 +21,19 @@
 
 # Wristband Multi-Tenant Demo App for FastAPI (Python)
 
-This repo contains a demo app showcasing Wristband authentication integration with a FastAPI backend and Next.js frontend. When an unauthenticated user attempts to access the frontend, it will redirect to the FastAPI backend's Login Endpoint, which in turn redirects the user to Wristband to authenticate. Wristband then redirects the user back to your application's Callback Endpoint which sets a session cookie before returning the user's browser to the frontend project.
+This demo app consists of:
+
+- **FastAPI Backend**: A Python backend with Wristband authentication integration
+- **Next.js Frontend**: A React-based frontend with authentication context
+
+The backend handles all authentication flows, including:
+- Storing client ID and secret
+- Handling OAuth2 authorization code flow redirections
+- Managing session cookies
+- Token refresh
+- API orchestration
+
+When an unauthenticated user attempts to access the frontend, it will redirect to the FastAPI backend's Login Endpoint, which in turn redirects the user to Wristband to authenticate. Wristband then redirects the user back to your application's Callback Endpoint which sets a session cookie before returning the user's browser to the frontend project.
 
 <br>
 <hr />
@@ -71,33 +83,28 @@ You can also follow the [Demo App Guide](https://docs.wristband.dev/docs/setting
 
 ### 3) Apply your Wristband configuration values
 
-After completing demo app creation, you will be prompted with values that you should use to create environment variables for the Express server. You should see:
+After completing demo app creation, you will be prompted with values that you should use to create environment variables for the FastAPI server. You should see:
 
 - `APPLICATION_VANITY_DOMAIN`
 - `CLIENT_ID`
 - `CLIENT_SECRET`
 
-Copy those values, then create an environment variable file for the FastAPI server at: `server/.env`. Once created, paste the copied values into this file.
+Copy those values, then create an environment variable file for the FastAPI server at: `backend/.env`. Once created, paste the copied values into this file.
 
-### 4) Install dependencies & Activate Python VENV
+### 4) Install dependencies
 
-You can install all required dependencies with a single command:
+From the root directory of this project, you can install all required dependencies for both the frontend and backend with a single command:
 
 ```bash
 npm run setup
 ```
 
-This will set up both the frontend and backend components.
-
 ### 5) Run the application
 
-Once everything is set up, you can start the application with:
+While still in the root directory, you can start the demo application with:
 
 ```bash
 npm start
-
-# run in debug mode
-npm run start:debug
 ```
 
 <br>
@@ -106,9 +113,11 @@ npm run start:debug
 
 ## How to interact with the demo app
 
+The NextJS server starts on port 3001, and the FastAPI server starts on port 6001. NextJS is configured with rewrites to forward all `/api/*` requests to the FastAPI backend at `http://localhost:6001/api/*`. This allows the frontend to make clean API calls using relative URLs like `/api/session` while keeping the backend services separate and maintainable. The FastAPI server includes CORS middleware to allow cross-origin requests from the NextJS frontend.
+
 ### Signup Users
 
-Now that the demo app is up and running, you can sign up your first customer on the Signup Page at the following location:
+You can sign up your first customer on the Signup Page at the following location:
 
 - `https://{application_vanity_domain}/signup`, where `{application_vanity_domain}` should be replaced with the value of the "Application Vanity Domain" value of the application (found in the Wristband Dashboard).
 
@@ -130,55 +139,56 @@ If users wish to directly access the Tenant-level Login Page without going throu
 
 This login page is hosted by Wristband. Here, the user will be prompted to enter their credentials to login to the application.
 
+### Home Page
+
+The home page of the app can be accessed at `http://localhost:3001`. When the user is not authenticated, they will only see a Login button that will take them to the Application-level Login/Tenant Discovery page.
+
 ### Architecture
 
-This demo app consists of:
+The application in this repository utilizes the Backend for Frontend (BFF) pattern, where FastAPI is the backend for the NextJS/React frontend. The server is responsible for:
 
-- **FastAPI Backend**: A Python backend with Wristband authentication integration
-- **Next.js Frontend**: A modern React-based frontend with authentication context
+- Storing the client ID and secret.
+- Handling the OAuth2 authorization code flow redirections to and from Wristband during user login.
+- Creating the application session cookie to be sent back to the browser upon successful login.  The application session cookie contains the access and refresh tokens as well as some basic user info.
+- Refreshing the access token if the access token is expired.
+- Orchestrating all API calls from the frontend to Wristband.
+- Destroying the application session cookie and revoking the refresh token when a user logs out.
 
-The backend handles all authentication flows, including:
-- Storing client ID and secret
-- Handling OAuth2 authorization code flow redirections
-- Managing session cookies
-- Token refresh
-- API orchestration
+API calls made from NextJS/React to FastAPI pass along the application session cookie and a [CSRF token header](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#double-submit-cookie) (parsed from the CSRF cookie) with every request.  The server has an auth middleware for all protected routes responsbile for:
 
-<br>
-<hr>
-<br>
+- Validating the session and refreshing the access token (if necessary)
+- Validating the CSRF token
 
-## Manual Installation Guide
-
-If you prefer to set up components individually:
-
-### Backend Setup 🐍
-```bash
-# Navigate to backend directory
-cd backend
-
-# Option A: Pip Installation
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
-
-# Option B: Poetry Installation (Optional)
-poetry install
-```
-
-### Frontend Setup 📦
-```bash
-# Navigate to frontend directory
-cd frontend
-
-# Install dependencies
-npm install
-```
-
+Wristband hosts all onboarding workflow pages (signup, login, etc), and the FastAPI server will redirect to Wristband in order to show users those pages.
 
 <br>
 <hr>
 <br>
+
+## Wristband FastAPI Auth SDK
+
+This demo app is leveraging the [Wristband fastapi-auth SDK](https://github.com/wristband-dev/fastapi-auth) for all authentication interaction in the FastAPI server. Refer to that GitHub repository for more information.
+
+<br>
+
+## Wristband React Client Auth SDK
+
+This demo app is leveraging the [Wristband react-client-auth SDK](https://github.com/wristband-dev/react-client-auth) for any authenticated session interaction in the NextJS/React frontend. Refer to that GitHub repository for more information.
+
+<br/>
+
+## CSRF Protection
+
+Cross Site Request Forgery (CSRF) is a security vulnerability where attackers trick authenticated users into unknowingly submitting malicious requests to your application. This demo app is leveraging a technique called the Syncrhonizer Token Pattern to mitigate CSRF attacks by employing two cookies: a session cookie for user authentication and a CSRF token cookie containing a unique token. With each request, the CSRF token is included both in the cookie and the request payload, enabling server-side validation to prevent CSRF attacks.
+
+Refer to the [OWASP CSRF Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html) for more information about this topic.
+
+> [!WARNING]
+> Your own application should take effort to mitigate CSRF attacks in addition to any Wristband authentication, and it is highly recommended to take a similar approach as this demo app to protect against thse types of attacks.
+
+Within the demo app code base, you can search in your IDE of choice for the text `CSRF_TOUCHPOINT`.  This will show the various places in both the NextJS/React frontend code and FastAPI backend code where CSRF is involved.
+
+<br/>
 
 ## Questions
 

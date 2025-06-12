@@ -4,7 +4,6 @@
   "author": "Wristband",
   "version": "0.1.0",
   "private": true,
-  "main": "index.js",
   "engines": {
     "node": ">=18.12.1",
     "npm": ">=8.19.2"
@@ -12,18 +11,15 @@
   "scripts": {
     "backend": "(cd backend && .venv/bin/python run.py)",
     "backend:clean": "rm -rf backend/.venv $(find backend -type d -name '__pycache__')",
-    "backend:debug": "(cd backend && .venv/bin/python run.py --debug)",
-    "backend:install": "(cd backend && python3 -m venv .venv && .venv/bin/pip install -e .)",
+    "backend:install": "(cd backend && python3 -m venv .venv --upgrade-deps && .venv/bin/pip install -e .)",
     "clean": "rm -rf node_modules && npm run frontend:clean && npm run backend:clean",
     "frontend": "npm run dev --prefix frontend",
     "frontend:clean": "rm -rf frontend/node_modules frontend/dist",
     "frontend:install": "npm install --prefix frontend",
     "setup": "npm install && npm run frontend:install && npm run backend:install",
-    "start": "concurrently --kill-others-on-fail --names \"backend,frontend\" --prefix-colors \"green,yellow\" \"npm run backend\" \"sleep 3 && npm run frontend\"",
-    "start:debug": "concurrently --kill-others-on-fail --names \"backend,frontend\" --prefix-colors \"green,yellow\" \"npm run backend:debug\" \"sleep 3 && npm run frontend\""
+    "start": "concurrently --kill-others-on-fail --names \"backend,frontend\" --prefix-colors \"green,yellow\" \"npm run backend\" \"sleep 3 && npm run frontend\""
   },
   "devDependencies": {
-    "concurrently": "^9.1.2",
-    "js-yaml": "^4.1.0"
+    "concurrently": "^9.1.2"
   }
 }
