@@ -16,6 +16,7 @@
     "frontend": "npm run dev --prefix frontend",
     "frontend:clean": "rm -rf frontend/node_modules frontend/dist",
     "frontend:install": "npm install --prefix frontend",
+    "generate-secret": "python3 -c \"import secrets; print(secrets.token_urlsafe(32))\"",
     "setup": "npm install && npm run frontend:install && npm run backend:install",
     "start": "concurrently --kill-others-on-fail --names \"backend,frontend\" --prefix-colors \"green,yellow\" \"npm run backend\" \"sleep 3 && npm run frontend\""
   },

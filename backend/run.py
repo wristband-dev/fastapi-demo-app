@@ -10,7 +10,7 @@ load_dotenv()
 
 # Local imports
 from middleware.auth_middleware import AuthMiddleware
-from middleware.session_middleware import SimpleSessionMiddleware
+from middleware.session_middleware import EncryptedSessionMiddleware
 from routes import router as all_routes
 
 def create_app() -> FastAPI:
@@ -27,20 +27,16 @@ def create_app() -> FastAPI:
     # 1) Add the auth middleware to the app  
     app.add_middleware(AuthMiddleware)
 
-    # 2) Add simple session middleware
-    app.add_middleware(SimpleSessionMiddleware)
-    # https://www.starlette.io/middleware/#sessionmiddleware
-    # Add session middleware FIRST (makes request.session available)
-    # app.add_middleware(
-    #     EncryptedSessionMiddleware,
-    #     cookie_name="session",
-    #     secret_key="a8f5f167f44f4964e6c998dee827110c",
-    #     session_type=SessionData,  # Add this for typed sessions
-    #     max_age=1800,  # 30 minutes
-    #     path="/",
-    #     same_site="lax",
-    #     http_only=False,  # Set to True in production
-    # )
+    # 2) Add session middleware
+    app.add_middleware(
+        EncryptedSessionMiddleware,
+        cookie_name="session",
+        secret_key="a8f5f167f44f4964e6c998dee827110c",
+        max_age=1800,  # 30 minutes
+        path="/",
+        same_site="lax",
+        http_only=False,  # Set to True in production
+    )
 
     # 3) Add CORS middleware
     app.add_middleware(

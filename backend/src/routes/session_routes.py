@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 @router.get('')
 def get_session(request: Request) -> Response:
     try:
-        session_data: SessionData = request.state.session
+        session_data: SessionData = request.state.session.get()
         return JSONResponse(
             content={
                 "tenantId": session_data.tenant_id,

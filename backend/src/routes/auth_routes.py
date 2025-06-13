@@ -6,13 +6,12 @@ from fastapi.routing import APIRouter
 from fastapi.responses import Response
 
 # Wristband imports
-from wristband.models import CallbackResult, CallbackData, LogoutConfig, CallbackResultType
+from wristband.fastapi_auth import CallbackResult, CallbackData, LogoutConfig, CallbackResultType
 
 # Local imports
 from auth.wristband import wristband_auth
 from models.session_data import SessionData
 from utils.csrf import create_csrf_token, delete_csrf_cookie, update_csrf_cookie
-from utils.session import delete_session_cookie, update_session_cookie
 
 router = APIRouter()
 
@@ -56,17 +55,17 @@ def callback(request: Request) -> Response:
     )
 
     # Create the callback response that sets the session and CSRF cookies.
-    resp: Response = wristband_auth._create_callback_response(request, "http://localhost:3001")
-    update_session_cookie(resp, session_data)
-    update_csrf_cookie(resp, csrf_token)
-    return resp
+    response: Response = wristband_auth._create_callback_response(request, "http://localhost:3001")
+    request.state.session.update(response, session_data)
+    update_csrf_cookie(response, csrf_token)
+    return response
 
 @router.get('/logout')
 def logout(request: Request) -> Response:
-    session_data: SessionData = request.state.session
+    session_data: SessionData = request.state.session.get()
 
     # Log out the user and redirect to the Wristband Logout Endpoint
-    resp: Response = wristband_auth.logout(
+    response: Response = wristband_auth.logout(
         req=request,
         config=LogoutConfig(
             refresh_token=session_data.refresh_token if session_data else None,
@@ -76,7 +75,7 @@ def logout(request: Request) -> Response:
     )
 
     # Delete the session and CSRF cookies.
-    delete_session_cookie(resp)
-    delete_csrf_cookie(resp)
+    request.state.session.delete(response)
+    delete_csrf_cookie(response)
 
-    return resp
+    return response

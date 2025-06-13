@@ -5,8 +5,6 @@ from .nickname_routes import router as nickname_router
 from .session_routes import router as session_router
 
 router = APIRouter()
-
-# Order matters here!
 router.include_router(auth_router, prefix='/api/auth')
 router.include_router(nickname_router, prefix='/api/nickname')
 router.include_router(session_router, prefix='/api/session')
