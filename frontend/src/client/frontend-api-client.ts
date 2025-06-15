@@ -1,23 +1,29 @@
+/**
+ * This module configures and exports an Axios instance for making API requests to the backend.
+ * It automatically handles common headers and base URL configuration from Next.js runtime config.
+ * Includes CSRF protection and unauthorized access handling.
+ */
 import axios from 'axios';
-import getConfig from 'next/config';
+import { redirectToLogin } from '@wristband/react-client-auth';
 
-const { publicRuntimeConfig } = getConfig() || { publicRuntimeConfig: {} };
-
-// Axios has XSRF token handling by default.  We still specify the values in the config
-// here merely to be explicit about which names are being used under the hood.
 const JSON_MEDIA_TYPE = 'application/json;charset=UTF-8';
 
-// Extract key values from publicRuntimeConfig
-// Provide defaults if values might be undefined at build time but available at runtime
-const appHost = publicRuntimeConfig.appHost || 'http://localhost:3000'; // Default, if not set
-const backendPort = publicRuntimeConfig.backendPort || 8000; // Default, if not set
+const frontendApiClient = axios.create({
+  baseURL: `/api`,
+  headers: { 'Content-Type': JSON_MEDIA_TYPE, Accept: JSON_MEDIA_TYPE },
+  /* CSRF_TOUCHPOINT */
+  xsrfCookieName: 'CSRF-TOKEN',
+  xsrfHeaderName: 'X-CSRF-TOKEN',
+  withCredentials: true,
+});
 
-const defaultOptions = {
-  // Set up baseURL based on the app host and backend port from publicRuntimeConfig
-  baseURL: `${appHost}:${backendPort}/api`,
-  headers: { 'Content-Type': JSON_MEDIA_TYPE, Accept: JSON_MEDIA_TYPE }
+// Add an unauthorized access interceptor to handle 401 or 403 responses
+const unauthorizedAccessInterceptor = (error: unknown) => {
+  if (axios.isAxiosError(error) && [401, 403].includes(error.response?.status!)) {
+    redirectToLogin('/api/auth/login');
+  }
+  return Promise.reject(error);
 };
-
-const frontendApiClient = axios.create(defaultOptions);
+frontendApiClient.interceptors.response.use((response) => response, unauthorizedAccessInterceptor);
 
 export default frontendApiClient;
