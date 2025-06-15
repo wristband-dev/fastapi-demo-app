@@ -35,7 +35,7 @@ def create_app() -> FastAPI:
         max_age=1800,  # 30 minutes
         path="/",
         same_site="lax",
-        http_only=False,  # Set to True in production
+        secure=False  # Set to True in production
     )
 
     # 3) Add CORS middleware

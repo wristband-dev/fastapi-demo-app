@@ -38,7 +38,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         try:
             # WRISTBAND_TOUCHPOINT - AUTHENTICATION
-            new_token_data: TokenData | None = wristband_auth.refresh_token_if_expired(
+            new_token_data: TokenData | None = await wristband_auth.refresh_token_if_expired(
                 session_data.refresh_token,
                 session_data.expires_at
             )

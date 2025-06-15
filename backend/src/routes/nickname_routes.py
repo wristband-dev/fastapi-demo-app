@@ -38,18 +38,18 @@ TITLES = [
 
 
 @router.get('')
-def get_nickname(request: Request) -> Response:
+async def get_nickname(request: Request) -> Response:
     try:
         # Get the Wristband user's existing nickaname
         session_data: SessionData = request.state.session.get()
-        nickname: str = wristband_client.get_user_nickname(session_data.user_id, session_data.access_token)
+        nickname: str = await wristband_client.get_user_nickname(session_data.user_id, session_data.access_token)
         return JSONResponse(content={ "nickname": nickname })
     except Exception as e:
         logger.exception(f"Unexpected Get Nickname Endpoint error: {str(e)}")
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @router.post('')
-def generate_new_nickname(request: Request) -> Response:
+async def generate_new_nickname(request: Request) -> Response:
     try:
         nickname: str = random.choice([
             f"{random.choice(ADJECTIVES)} {random.choice(NICKNAMES)}",
@@ -59,7 +59,7 @@ def generate_new_nickname(request: Request) -> Response:
 
         # Update the Wristband user with the new nickaname
         session_data: SessionData = request.state.session.get()
-        wristband_client.update_user_nickname(session_data.user_id, nickname, session_data.access_token)
+        await wristband_client.update_user_nickname(session_data.user_id, nickname, session_data.access_token)
         return JSONResponse(content={ "nickname": nickname })
     except Exception as e:
         logger.exception(f"Unexpected Generate New Nickname Endpoint error: {str(e)}")

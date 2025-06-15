@@ -17,9 +17,11 @@ class WristbandApiClient:
             'Content-Type': 'application/json'
         }
 
-    def update_user_nickname(self, user_id: str, nickname: str, access_token: str) -> dict[str, Any]:
+        self.client = httpx.AsyncClient()
+
+    async def update_user_nickname(self, user_id: str, nickname: str, access_token: str) -> dict[str, Any]:
         # Update User API - https://docs.wristband.dev/reference/patchuserv1
-        response: httpx.Response = httpx.patch(
+        response: httpx.Response = await self.client.patch(
             self.base_url + f'/users/{user_id}',
             headers={
                 **self.headers,
@@ -35,9 +37,9 @@ class WristbandApiClient:
 
         return response.json() if response.content else {}
 
-    def get_user_nickname(self, user_id: str, access_token: str) -> str:
+    async def get_user_nickname(self, user_id: str, access_token: str) -> str:
         # Get User API - https://docs.wristband.dev/reference/getuserv1
-        response: httpx.Response = httpx.get(
+        response: httpx.Response = await self.client.get(
             self.base_url + f'/users/{user_id}',
             headers={
                 **self.headers,

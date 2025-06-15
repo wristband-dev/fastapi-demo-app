@@ -21,7 +21,6 @@ class _SessionManager:
         max_age: int,
         path: str,
         same_site: SameSiteOptions,
-        http_only: bool,
         secure: bool
     ):
         self.encryptor = encryptor
@@ -29,7 +28,7 @@ class _SessionManager:
         self.max_age = max_age
         self.path = path
         self.same_site: SameSiteOptions = same_site
-        self.http_only = http_only
+        self.http_only = True
         self.secure = secure
         self._session_data: SessionData = SessionData.empty()
     
@@ -79,11 +78,10 @@ class EncryptedSessionMiddleware(BaseHTTPMiddleware):
             EncryptedSessionMiddleware,
             cookie_name="session",
             secret_key="your-secret-key-here",
-            max_age=1800,  # 30 minutes
+            max_age=1800,
             path="/",
             same_site="lax",
-            http_only=True,  # Set to True in production
-            secure=False,    # Set to True in production with HTTPS
+            secure=True,
         )
     
     In routes:
@@ -106,8 +104,7 @@ class EncryptedSessionMiddleware(BaseHTTPMiddleware):
         max_age: int = 1800,  # 30 minutes
         path: str = "/",
         same_site: Literal["lax", "strict", "none"] = "lax",
-        http_only: bool = True,
-        secure: bool = False,
+        secure: bool = True,
     ):
         super().__init__(app)
         
@@ -118,7 +115,6 @@ class EncryptedSessionMiddleware(BaseHTTPMiddleware):
         self.max_age = max_age
         self.path = path
         self.same_site: SameSiteOptions = same_site
-        self.http_only = http_only
         self.secure = secure
         self.encryptor = SessionEncryptor(secret_key)
     
@@ -130,7 +126,6 @@ class EncryptedSessionMiddleware(BaseHTTPMiddleware):
             max_age=self.max_age,
             path=self.path,
             same_site=self.same_site,
-            http_only=self.http_only,
             secure=self.secure
         )
         
@@ -152,5 +147,4 @@ class EncryptedSessionMiddleware(BaseHTTPMiddleware):
         
         # Process the request
         response = await call_next(request)
-        
         return response

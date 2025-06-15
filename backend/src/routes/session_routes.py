@@ -8,7 +8,7 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 @router.get('')
-def get_session(request: Request) -> Response:
+async def get_session(request: Request) -> Response:
     try:
         session_data: SessionData = request.state.session.get()
         return JSONResponse(
