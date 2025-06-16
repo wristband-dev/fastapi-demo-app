@@ -1,4 +1,5 @@
 <div align="center">
+  <a href="https://wristband.dev">
     <picture>
       <img src="https://assets.wristband.dev/images/email_branding_logo_v1.png" alt="Github" width="297" height="64">
     </picture>
@@ -6,7 +7,6 @@
   <p align="center">
     Enterprise-ready auth that is secure by default, truly multi-tenant, and ungated for small businesses.
   </p>
-  <a href="https://wristband.dev">
   <p align="center">
     <b>
       <a href="https://wristband.dev">Website</a> •
@@ -17,166 +17,181 @@
 
 <br/>
 
+---
 
-# Wristband Python FastAPI Accelerator
+# Wristband Multi-Tenant Demo App for FastAPI (Python)
 
-
-A full-stack application accelerator showcasing Wristband authentication integration with a FastAPI backend and Next.js frontend. This repository provides a production-ready foundation for building secure, multi-tenant web applications with enterprise-grade authentication.
-
-
-## Architecture
+This demo app consists of:
 
 - **FastAPI Backend**: A Python backend with Wristband authentication integration
-- **Next.js Frontend**: A modern React-based frontend with authentication context
-- **Firestore Database**: A NoSQL document database for storing application data with flexible schema support
-- **(OPTIONAL) Google Cloud Provider**: Integration with Google Cloud Platform for hosting and additional services
+- **Next.js Frontend**: A React-based frontend with authentication context
 
-## Prerequisities
+The backend handles all authentication flows, including:
+- Storing client ID and secret
+- Handling OAuth2 authorization code flow redirections
+- Managing session cookies
+- Token refresh
+- API orchestration
 
-**NPM**
-1. Visit [NPM Downloads](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) 
-2. Download 
+When an unauthenticated user attempts to access the frontend, it will redirect to the FastAPI backend's Login Endpoint, which in turn redirects the user to Wristband to authenticate. Wristband then redirects the user back to your application's Callback Endpoint which sets a session cookie before returning the user's browser to the frontend project.
 
-**PYTHON3**
+<br>
+<hr />
+<br>
+
+## Requirements
+
+This demo app requires the following prerequisites:
+
+### Python 3
 1. Visit [Python Downloads](https://www.python.org/downloads/)
-2. Download
+2. Download and install the latest Python 3 version
+3. Verify the installation by opening a terminal or command prompt and running:
+```bash
+python --version # Should show Python 3.x.x
+```
 
-## Setup
+### Node.js and NPM
+1. Visit [NPM Downloads](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+2. Download and install the appropriate version for your OS
+3. Verify the installation by opening a terminal or command prompt and running:
+```bash
+node --version # Should show v18.x.x or higher
+npm --version  # Should show v8.x.x or higher
+```
 
-### 1. Fork the Repository
+<br>
+<hr>
+<br>
 
-1. Click the "Fork" button at the top right of this GitHub repository.
-2. This will create a copy of the repository in your GitHub account.
-3. Clone your forked repository to your local machine:
-   ```bash
-   git clone https://github.com/wristband-dev/fastapi-demo-app.git
-   cd fastapi-demo-app
-   ```
-4. (Optional) Keep your fork in sync with the original repository:
-   ```bash
-   # Add the original repository as a remote called "upstream"
-   git remote add upstream https://github.com/wristband-dev/fastapi-demo-app.git
-   
-   # Fetch changes from the upstream repository
-   git fetch upstream
-   
-   # Merge changes from upstream into your local main branch
-   git checkout main
-   git merge upstream/main
-   ```
+## Getting Started
 
+You can start up the demo application in a few simple steps.
 
-### 2. Wristband Configuration (TODO - JIM TO ADD WRISTBAD DEMO APP TO DASHBOARD)
-1. Create an application in Wristband:
-   - Configure Application Domain Name
-   - Set Application Login URL: `https://localhost:8080/api/auth/login` (for local testing)
-2. Add OAuth2 Client:
-   - Set platform to "Python"
-   - Set callback URL: `https://localhost:8080/api/auth/callback` (for local testing)
-3. Create a tenant in Wristband
+### 1) Sign up for a Wristband account
 
+First, make sure you sign up for a Wristband account at [https://wristband.dev](https://wristband.dev).
 
-### 3. Environment Variables
-1. Create environemnt varirable file
-   ```bash
-   cp .env.example .env
-   ```
-2. Add in the following required variables
-   ```
-   CLIENT_ID="CLIENT_ID"
-   CLIENT_SECRET="CLIENT_SECRET"
-   LOGIN_STATE_SECRET="LOGIN_STATE_SECRET"
-   WRISTBAND_APPLICATION_DOMAIN="WRISTBAND_APPLICATION_DOMAIN"
-   ```
+### 2) Provision the FastAPI demo application in the Wristband Dashboard
 
-   
-TODO - OR just get from export file
+After your Wristband account is set up, log in to the Wristband dashboard.  Once you land on the home page of the dashboard, click the button labelled "Add Demo App".  Make sure you choose the following options:
 
-### 4. Install Local Packages
+- Step 1: Subject to Authenticate - Humans
+- Step 2: Application Framework - FastAPI (Python)
+
+You can also follow the [Demo App Guide](https://docs.wristband.dev/docs/setting-up-a-demo-app) for more information.
+
+### 3) Apply your Wristband configuration values
+
+After completing demo app creation, you will be prompted with values that you should use to create environment variables for the FastAPI server. You should see:
+
+- `APPLICATION_VANITY_DOMAIN`
+- `CLIENT_ID`
+- `CLIENT_SECRET`
+
+Copy those values, then create an environment variable file for the FastAPI server at: `backend/.env`. Once created, paste the copied values into this file.
+
+### 4) Install dependencies
+
+From the root directory of this project, you can install all required dependencies for both the frontend and backend with a single command:
+
 ```bash
 npm run setup
 ```
-[Manual Local Package Installation](#install-local-packages)
 
+### 5) Run the application
 
+While still in the root directory, you can start the demo application with:
 
-## Local Start Up
 ```bash
 npm start
-
-# run in debug mode
-npm run start:debug
 ```
-[Manual Start Up](#local-start-up)
 
+<br>
+<hr>
+<br>
 
+## How to interact with the demo app
 
-## Deployment
-   1. Publish Fast Api app to google cloud run
-      - dockerize python env
-      - build
-      ```bash
-      docker build -t wristband-backend -f backend/Dockerfile .
-      ```
-      - run 
-      ```bash
-      docker run --env-file .env -p 8080:8080 wristband-backend
-      ```
-   2. Host firestore database in firebase
-   3. Publish the frontend (next js) to vercel
+The NextJS server starts on port 3001, and the FastAPI server starts on port 6001. NextJS is configured with rewrites to forward all `/api/*` requests to the FastAPI backend at `http://localhost:6001/api/*`. This allows the frontend to make clean API calls using relative URLs like `/api/session` while keeping the backend services separate and maintainable. The FastAPI server includes CORS middleware to allow cross-origin requests from the NextJS frontend.
 
+### Signup Users
 
----
+You can sign up your first customer on the Signup Page at the following location:
 
+- `https://{application_vanity_domain}/signup`, where `{application_vanity_domain}` should be replaced with the value of the "Application Vanity Domain" value of the application (found in the Wristband Dashboard).
 
-## Manual Installation
-### Install Local Packages
-#### Backend Setup 🐍
-```bash
-# Navigate to backend directory
-cd backend
+This signup page is hosted by Wristband. Completing the signup form will provision both a new tenant with the specified tenant domain name and a new user that is assigned to that tenant.
 
-# Option A: Pip Installation
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
+### Application-level Login (Tenant Discovery)
 
-# Option B: Poetry Installation (Optional)
-poetry install
-```
-#### Database Setup 📀
-```bash
-# install firebase cli globally
-npm install -g firebase-tools
+Users of this app can access the Application-level Login Page at the following location:
 
-# login
-firebase login
-```
-#### Frontend Setup 📦
-```bash
-# Navigate to frontend directory
-cd frontend
+- `https://{application_vanity_domain}/login`, where `{application_vanity_domain}` should be replaced with the value of the "Application Vanity Domain" value of the application.
 
-# Install dependencies
-npm install
-```
-### Local Start Up
-#### Start Backend API 🐍
-```
-cd backend
-python3 run.py
-```
-#### Start Backend Database 📀
-```
-cd backend
-# dynamic config file vars
-node ./scripts/run-database.js
+This login page is hosted by Wristband. Here, the user will be prompted to enter either their email or their tenant's domain name, redirecting them to the Tenant-level Login Page for their specific tenant.
 
-# hardcoded values (need to assign env vars to be able to access the database in the py env)
-firebase emulators:start --only firestore --project wristband-fastapi-demo
-```
-#### Start Frontend 📦
-```
-cd frontend
-npm run dev
-```
+### Tenant-level Login
+
+If users wish to directly access the Tenant-level Login Page without going through the Application-level Login Page, they can do so at:
+
+- `https://localhost:6001/api/auth/login?tenant_domain={tenant_domain}`, where `{tenant_domain}` should be replaced with the desired tenant's domain name.
+
+This login page is hosted by Wristband. Here, the user will be prompted to enter their credentials to login to the application.
+
+### Home Page
+
+The home page of the app can be accessed at `http://localhost:3001`. When the user is not authenticated, they will only see a Login button that will take them to the Application-level Login/Tenant Discovery page.
+
+### Architecture
+
+The application in this repository utilizes the Backend for Frontend (BFF) pattern, where FastAPI is the backend for the NextJS/React frontend. The server is responsible for:
+
+- Storing the client ID and secret.
+- Handling the OAuth2 authorization code flow redirections to and from Wristband during user login.
+- Creating the application session cookie to be sent back to the browser upon successful login.  The application session cookie contains the access and refresh tokens as well as some basic user info.
+- Refreshing the access token if the access token is expired.
+- Orchestrating all API calls from the frontend to Wristband.
+- Destroying the application session cookie and revoking the refresh token when a user logs out.
+
+API calls made from NextJS/React to FastAPI pass along the application session cookie and a [CSRF token header](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#double-submit-cookie) (parsed from the CSRF cookie) with every request.  The server has an auth middleware for all protected routes responsbile for:
+
+- Validating the session and refreshing the access token (if necessary)
+- Validating the CSRF token
+
+Wristband hosts all onboarding workflow pages (signup, login, etc), and the FastAPI server will redirect to Wristband in order to show users those pages.
+
+<br>
+<hr>
+<br>
+
+## Wristband FastAPI Auth SDK
+
+This demo app is leveraging the [Wristband fastapi-auth SDK](https://github.com/wristband-dev/fastapi-auth) for all authentication interaction in the FastAPI server. Refer to that GitHub repository for more information.
+
+<br>
+
+## Wristband React Client Auth SDK
+
+This demo app is leveraging the [Wristband react-client-auth SDK](https://github.com/wristband-dev/react-client-auth) for any authenticated session interaction in the NextJS/React frontend. Refer to that GitHub repository for more information.
+
+<br/>
+
+## CSRF Protection
+
+Cross Site Request Forgery (CSRF) is a security vulnerability where attackers trick authenticated users into unknowingly submitting malicious requests to your application. This demo app is leveraging a technique called the Syncrhonizer Token Pattern to mitigate CSRF attacks by employing two cookies: a session cookie for user authentication and a CSRF token cookie containing a unique token. With each request, the CSRF token is included both in the cookie and the request payload, enabling server-side validation to prevent CSRF attacks.
+
+Refer to the [OWASP CSRF Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html) for more information about this topic.
+
+> [!WARNING]
+> Your own application should take effort to mitigate CSRF attacks in addition to any Wristband authentication, and it is highly recommended to take a similar approach as this demo app to protect against thse types of attacks.
+
+Within the demo app code base, you can search in your IDE of choice for the text `CSRF_TOUCHPOINT`.  This will show the various places in both the NextJS/React frontend code and FastAPI backend code where CSRF is involved.
+
+<br/>
+
+## Questions
+
+Reach out to the Wristband team at <support@wristband.dev> for any questions regarding this demo app.
+
+<br/>
