@@ -51,7 +51,7 @@ async def callback(request: Request) -> Response:
     )
 
     # Create the callback response that sets the session and CSRF cookies.
-    response: Response = await wristband_auth.create_callback_response(request, "http://localhost:3001")
+    response: Response = await wristband_auth.create_callback_response(request, "http://localhost:6001/home")
     request.state.session.update(response, session_data)
     update_csrf_cookie(response, session_data.csrf_token)  # CSRF_TOUCHPOINT
     return response

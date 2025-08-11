@@ -41,7 +41,7 @@ def create_app() -> FastAPI:
     # 3) Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3001"],
+        allow_origins=["http://localhost:6001"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"]
@@ -56,4 +56,4 @@ def create_app() -> FastAPI:
 app = create_app()
 
 if __name__ == '__main__':
-    uvicorn.run("run:app", host="localhost", port=6001, reload=True)
+    uvicorn.run("run:app", host="localhost", port=3001, reload=True)
