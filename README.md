@@ -24,7 +24,7 @@
 This demo app consists of:
 
 - **FastAPI Backend**: A Python backend with Wristband authentication integration
-- **Next.js Frontend**: A React-based frontend with authentication context
+- **React Frontend**: A React frontend with authentication context
 
 The backend handles all authentication flows, including:
 - Storing client ID and secret
@@ -33,7 +33,7 @@ The backend handles all authentication flows, including:
 - Token refresh
 - API orchestration
 
-When an unauthenticated user attempts to access the frontend, it will redirect to the FastAPI backend's Login Endpoint, which in turn redirects the user to Wristband to authenticate. Wristband then redirects the user back to your application's Callback Endpoint which sets a session cookie before returning the user's browser to the frontend project.
+When an unauthenticated user attempts to access the frontend, it will redirect to the FastAPI backend's Login Endpoint, which in turn redirects the user to Wristband to authenticate. Wristband then redirects the user back to your FastAPI's Callback Endpoint which sets a session cookie before returning the user's browser to the React frontend.
 
 <br>
 <hr />
@@ -77,7 +77,7 @@ First, make sure you sign up for a Wristband account at [https://wristband.dev](
 After your Wristband account is set up, log in to the Wristband dashboard.  Once you land on the home page of the dashboard, click the button labelled "Add Demo App".  Make sure you choose the following options:
 
 - Step 1: Subject to Authenticate - Humans
-- Step 2: Application Framework - FastAPI (Python)
+- Step 2: Application Framework - FastAPI Backend, React Frontend
 
 You can also follow the [Demo App Guide](https://docs.wristband.dev/docs/setting-up-a-demo-app) for more information.
 
@@ -113,7 +113,11 @@ npm start
 
 ## How to interact with the demo app
 
-The NextJS server starts on port 3001, and the FastAPI server starts on port 6001. NextJS is configured with rewrites to forward all `/api/*` requests to the FastAPI backend at `http://localhost:6001/api/*`. This allows the frontend to make clean API calls using relative URLs like `/api/session` while keeping the backend services separate and maintainable. The FastAPI server includes CORS middleware to allow cross-origin requests from the NextJS frontend.
+The FastAPI server starts on port 3001, and the frontend Vite dev server starts on port 6001. Vite is configured with rewrites to forward all `/api/*` requests to the FastAPI backend at `http://localhost:3001/api/*`. This allows the frontend to make clean API calls using relative URLs like `/api/session` while keeping the backend services separate and maintainable. The FastAPI server also includes CORS middleware to allow cross-origin requests from the React frontend.
+
+### Home Page
+
+The home page of the app can be accessed at `http://localhost:6001`. When the user is not authenticated, they will only see a Login button that will take them to the Application-level Login/Tenant Discovery page.
 
 ### Signup Users
 
@@ -139,13 +143,9 @@ If users wish to directly access the Tenant-level Login Page without going throu
 
 This login page is hosted by Wristband. Here, the user will be prompted to enter their credentials to login to the application.
 
-### Home Page
-
-The home page of the app can be accessed at `http://localhost:3001`. When the user is not authenticated, they will only see a Login button that will take them to the Application-level Login/Tenant Discovery page.
-
 ### Architecture
 
-The application in this repository utilizes the Backend for Frontend (BFF) pattern, where FastAPI is the backend for the NextJS/React frontend. The server is responsible for:
+The application in this repository utilizes the Backend for Frontend (BFF) pattern, where FastAPI is the backend for the React frontend. The server is responsible for:
 
 - Storing the client ID and secret.
 - Handling the OAuth2 authorization code flow redirections to and from Wristband during user login.
@@ -154,10 +154,10 @@ The application in this repository utilizes the Backend for Frontend (BFF) patte
 - Orchestrating all API calls from the frontend to Wristband.
 - Destroying the application session cookie and revoking the refresh token when a user logs out.
 
-API calls made from NextJS/React to FastAPI pass along the application session cookie and a [CSRF token header](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#double-submit-cookie) (parsed from the CSRF cookie) with every request.  The server has an auth middleware for all protected routes responsbile for:
+API calls made from React to FastAPI pass along the application session cookie and a [CSRF token header](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#double-submit-cookie) (parsed from the CSRF cookie) with every request.  The server has an auth middleware for all protected routes responsbile for:
 
 - Validating the session and refreshing the access token (if necessary)
-- Validating the CSRF token
+- Validating the CSRF tokena
 
 Wristband hosts all onboarding workflow pages (signup, login, etc), and the FastAPI server will redirect to Wristband in order to show users those pages.
 
@@ -173,7 +173,7 @@ This demo app is leveraging the [Wristband fastapi-auth SDK](https://github.com/
 
 ## Wristband React Client Auth SDK
 
-This demo app is leveraging the [Wristband react-client-auth SDK](https://github.com/wristband-dev/react-client-auth) for any authenticated session interaction in the NextJS/React frontend. Refer to that GitHub repository for more information.
+This demo app is leveraging the [Wristband react-client-auth SDK](https://github.com/wristband-dev/react-client-auth) for any authenticated session interaction in the React frontend. Refer to that GitHub repository for more information.
 
 <br/>
 
@@ -186,7 +186,7 @@ Refer to the [OWASP CSRF Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsh
 > [!WARNING]
 > Your own application should take effort to mitigate CSRF attacks in addition to any Wristband authentication, and it is highly recommended to take a similar approach as this demo app to protect against thse types of attacks.
 
-Within the demo app code base, you can search in your IDE of choice for the text `CSRF_TOUCHPOINT`.  This will show the various places in both the NextJS/React frontend code and FastAPI backend code where CSRF is involved.
+Within the demo app code base, you can search in your IDE of choice for the text `CSRF_TOUCHPOINT`.  This will show the various places in both the React frontend code and FastAPI backend code where CSRF is involved.
 
 <br/>
 
