@@ -44,6 +44,7 @@ export function HelloWorldTester() {
 
   return (
     <>
+      <h2 className="font-bold text-lg mb-1">Hello World Test</h2>
       <p>
         This button demonstrates token-based authentication as an alternative to cookies. The useWristbandToken() hook
         from the React SDK fetches and caches access tokens via the getToken() function. When clicked, this button sends
