@@ -1,13 +1,15 @@
+import logging
+
 from fastapi import APIRouter, Request, Response, status
 from fastapi.responses import JSONResponse
-import logging
 
 from models.session_data import SessionData
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.get('')
+
+@router.get("")
 async def get_token(request: Request) -> Response:
     try:
         session_data: SessionData = request.state.session.get()
