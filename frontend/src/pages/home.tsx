@@ -25,7 +25,6 @@ export default function HomePage() {
         {isAuthenticated && (
           <div className="flex flex-col gap-2 w-full">
             <hr className="my-2" />
-            <h2 className="font-bold text-lg mt-2 mb-1">Mafia Nickname Generator</h2>
             <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
               <TabButton
                 title="Test with Cookie"

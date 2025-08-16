@@ -58,6 +58,7 @@ export function NicknameGenerator() {
 
   return (
     <>
+      <h2 className="font-bold text-lg mb-1">Mafia Nickname Generator</h2>
       <p>
         This button demonstrates cookie-based authentication for API calls. When clicked, the browser automatically
         sends the session cookie to the FastAPI server. The configured Axios client includes the CSRF token in the
