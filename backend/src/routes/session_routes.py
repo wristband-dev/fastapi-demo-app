@@ -1,13 +1,15 @@
+import logging
+
 from fastapi import APIRouter, Request, Response, status
 from fastapi.responses import JSONResponse
-import logging
 
 from models.session_data import SessionData
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.get('')
+
+@router.get("")
 async def get_session(request: Request) -> Response:
     try:
         session_data: SessionData = request.state.session.get()
@@ -15,7 +17,7 @@ async def get_session(request: Request) -> Response:
             content={
                 "tenantId": session_data.tenant_id,
                 "userId": session_data.user_id,
-                "metadata": session_data.to_dict()
+                "metadata": session_data.to_dict(),
             }
         )
     except Exception as e:

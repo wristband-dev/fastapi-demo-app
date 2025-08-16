@@ -1,6 +1,6 @@
 {
   "name": "fastapi-demo-app",
-  "description": "A Wristband multi-tenant auth demo app. It uses a Python FastAPI backend server with a Next.js frontend interacting with it.",
+  "description": "A Wristband multi-tenant auth demo app. It uses a Python FastAPI backend server with a React frontend interacting with it.",
   "author": "Wristband",
   "version": "0.1.0",
   "private": true,
@@ -9,14 +9,14 @@
     "npm": ">=8.19.2"
   },
   "scripts": {
-    "backend": "(cd backend && .venv/bin/python run.py)",
-    "backend:clean": "rm -rf backend/.venv $(find backend -type d -name '__pycache__')",
-    "backend:install": "(cd backend && python3 -m venv .venv --upgrade-deps && .venv/bin/pip install -e .)",
+    "backend": "(cd backend && make run)",
+    "backend:clean": "(cd backend && make clean)",
+    "backend:install": "(cd backend && make install)",
     "clean": "rm -rf node_modules && npm run frontend:clean && npm run backend:clean",
     "frontend": "npm run dev --prefix frontend",
     "frontend:clean": "rm -rf frontend/node_modules frontend/dist",
     "frontend:install": "npm install --prefix frontend",
-    "generate-secret": "python3 -c \"import secrets; print(secrets.token_urlsafe(32))\"",
+    "generate-secret": "node -e \"console.log(require('crypto').randomBytes(32).toString('base64url'))\"",
     "setup": "npm install && npm run frontend:install && npm run backend:install",
     "start": "concurrently --kill-others-on-fail --names \"backend,frontend\" --prefix-colors \"green,yellow\" \"npm run backend\" \"sleep 3 && npm run frontend\""
   },

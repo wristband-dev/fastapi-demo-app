@@ -9,8 +9,9 @@ import uvicorn
 load_dotenv()
 
 # Local imports
-from middleware.auth_middleware import AuthMiddleware
-from middleware.session_middleware import EncryptedSessionMiddleware
+from middleware.encrypted_session_middleware import EncryptedSessionMiddleware
+from middleware.jwt_auth_middleware import JwtAuthMiddleware
+from middleware.session_cookie_auth_middleware import SessionCookieAuthMiddleware
 from routes import router as all_routes
 
 def create_app() -> FastAPI:
@@ -24,10 +25,18 @@ def create_app() -> FastAPI:
     # IMPORTANT: FastAPI middleware runs in reverse order of the way it is added below!!
     ########################################################################################
 
-    # 1) Add the auth middleware to the app  
-    app.add_middleware(AuthMiddleware)
+    # NOTE: In your Production app, you don't need both auth middleware types. You should choose the pattern
+    # that best suits your needs with regards to protecting your endpoints. We use both types of auth
+    # middleware here for demo purposes.
 
-    # 2) Add session middleware
+    # 1a) Add session cookie auth middleware (NOTE: applies to all non-auth "/api/*" routes except "/api/hello")
+    app.add_middleware(SessionCookieAuthMiddleware)
+    # 1b) Add JWT auth middleware (NOTE: only applies to "/api/hello" route)
+    app.add_middleware(JwtAuthMiddleware)
+
+    # 2) Add encrypted session middleware. In your Production app, you can use any kind of session library
+    # or storage that you prefer. We use this cookie-based approach because it is lightweight and doesn't
+    # require hardware/inrastructure.
     app.add_middleware(
         EncryptedSessionMiddleware,
         cookie_name="session",
@@ -35,7 +44,7 @@ def create_app() -> FastAPI:
         max_age=1800,  # 30 minutes
         path="/",
         same_site="lax",
-        secure=False  # Set to True in production
+        secure=True  # Set to True in production
     )
 
     # 3) Add CORS middleware
@@ -56,4 +65,4 @@ def create_app() -> FastAPI:
 app = create_app()
 
 if __name__ == '__main__':
-    uvicorn.run("run:app", host="localhost", port=3001, reload=True)
+    uvicorn.run("main:app", host="localhost", port=3001, reload=True)

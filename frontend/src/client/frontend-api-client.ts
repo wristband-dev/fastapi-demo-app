@@ -1,6 +1,6 @@
 /**
  * This module configures and exports an Axios instance for making API requests to the backend.
- * It automatically handles common headers and base URL configuration from Next.js runtime config.
+ * It automatically handles common headers and base URL configuration from React runtime config.
  * Includes CSRF protection and unauthorized access handling.
  */
 import axios from 'axios';

@@ -30,6 +30,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         loginUrl={'api/auth/login'}
         logoutUrl={'api/auth/logout'}
         sessionUrl={'api/session'}
+        tokenUrl={'api/token'}
         disableRedirectOnUnauthenticated={true} // Prevents automatic redirects when not authenticated
       >
         <App />

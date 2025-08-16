@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "fastapi-demo-app-backend"
 version = "0.1.0"
@@ -5,12 +9,58 @@ description = "Python FastAPI server that integrates Wristband authentication."
 authors = [
     {name = "Wristband", email = "support@wristband.dev"},
 ]
-license = {text = "MIT"}
-requires-python = ">=3.9,<4.0"
+license = "MIT"
+requires-python = ">=3.9"
 dependencies = [
-    "fastapi>=0.115.12,<0.116.0",
+    "fastapi>=0.116.0,<0.117.0",
     "httpx>=0.28.1,<0.29.0",
     "python-dotenv>=1.0.1,<2.0.0",
     "uvicorn>=0.34.0,<0.35.0",
-    "wristband-fastapi-auth==0.1.1",
+    "wristband-fastapi-auth==0.2.1",
+    "wristband-python-jwt==0.1.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "flake8>=6.0.0,<7.0.0",
+    "flake8-pyproject>=1.2.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.10.0",
+    "pip-audit>=2.0.0",
+    "bandit>=1.7.0",
+]
+
+[project.urls]
+"Homepage" = "https://wristband.dev"
+"Repository" = "https://github.com/wristband-dev/python-jwt"
+"Documentation" = "https://docs.wristband.dev"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.flake8]
+max-line-length = 120
+extend-ignore = ["E203", "W503"]
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+exclude = ["tests/"]
+mypy_path = ["src"]
+namespace_packages = true
+explicit_package_bases = true 
+
+[tool.black]
+line-length = 120
+target-version = ['py39']
+
+[tool.isort]
+profile = "black"
+line_length = 120
