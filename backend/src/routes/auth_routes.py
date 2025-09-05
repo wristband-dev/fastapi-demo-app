@@ -5,7 +5,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import Response
 
 # Wristband imports
-from wristband.fastapi_auth import CallbackData, CallbackResult, CallbackResultType, LogoutConfig
+from wristband.fastapi_auth import CallbackData, CallbackResult, CallbackResultType, LoginConfig, LogoutConfig
 
 # Local imports
 from auth.wristband import wristband_auth
