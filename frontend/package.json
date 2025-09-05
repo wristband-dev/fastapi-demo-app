@@ -17,7 +17,7 @@
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix"
   },
   "dependencies": {
-    "@wristband/react-client-auth": "^1.1.0",
+    "@wristband/react-client-auth": "^2.0.0",
     "axios": "^1.11.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
