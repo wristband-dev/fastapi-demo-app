@@ -28,7 +28,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       {/* WRISTBAND_TOUCHPOINT - AUTHENTICATION */}
       <WristbandAuthProvider
         loginUrl={'api/auth/login'}
-        logoutUrl={'api/auth/logout'}
         sessionUrl={'api/session'}
         tokenUrl={'api/token'}
         disableRedirectOnUnauthenticated={true} // Prevents automatic redirects when not authenticated
