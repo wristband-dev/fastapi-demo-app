@@ -10,7 +10,7 @@ export function HelloWorldTester() {
   /* WRISTBAND_TOUCHPOINT - AUTHENTICATION */
   const { getToken } = useWristbandToken();
   const { metadata } = useWristbandSession<SessionData>();
-  const { tenant_domain_name: tenantDomainName } = metadata;
+  const { tenantDomainName } = metadata;
 
   const sayHello = async () => {
     try {
