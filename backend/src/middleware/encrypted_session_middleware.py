@@ -5,7 +5,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from wristband.fastapi_auth import SessionEncryptor
 
-from models.session_data import SessionData
+from models.schemas import SessionData
 
 __all__ = ["EncryptedSessionMiddleware"]
 
@@ -45,7 +45,7 @@ class _SessionManager:
     def update(self, response: Response, session_data: SessionData) -> None:
         """Update session data and set cookie on response immediately"""
         self._session_data = session_data
-        encrypted_value = self.encryptor.encrypt(session_data.to_dict())
+        encrypted_value = self.encryptor.encrypt(session_data.model_dump())
 
         response.set_cookie(
             key=self.cookie_name,
@@ -137,7 +137,7 @@ class EncryptedSessionMiddleware(BaseHTTPMiddleware):
             session_cookie = request.cookies.get(self.cookie_name)
             if session_cookie:
                 session_data_dict = self.encryptor.decrypt(session_cookie)
-                session_data = SessionData.from_dict(session_data_dict)
+                session_data = SessionData.model_validate(session_data_dict)
                 session_manager.set_data(session_data)
             else:
                 session_manager.set_data(SessionData.empty())

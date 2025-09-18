@@ -12,7 +12,7 @@ export function NicknameGenerator() {
   /* WRISTBAND_TOUCHPOINT - AUTHENTICATION */
   const { isAuthenticated, isLoading } = useWristbandAuth();
   const { metadata } = useWristbandSession<SessionData>();
-  const { tenant_domain_name: tenantDomainName } = metadata;
+  const { tenantDomainName } = metadata;
 
   useEffect(() => {
     if (isAuthenticated && !isLoading && !nickname) {

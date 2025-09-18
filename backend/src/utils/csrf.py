@@ -2,6 +2,9 @@ import secrets
 
 from fastapi.responses import Response
 
+# IMPORTANT: Set this to True in Production!!!
+is_csrf_cookie_secure = False
+
 
 # CSRF_TOUCHPOINT
 def create_csrf_token() -> str:
@@ -19,10 +22,16 @@ def update_csrf_cookie(response: Response, csrf_token: str) -> None:
         max_age=1800,  # 30 minutes in seconds
         path="/",
         samesite="lax",  # Equivalent to sameSite: true in JS
-        secure=True,  # IMPORTANT: Set secure=True in Production!!!
+        secure=is_csrf_cookie_secure,  # IMPORTANT: Set this to True in Production!!!
     )
 
 
 def delete_csrf_cookie(response: Response) -> None:
-    # IMPORTANT: Set secure=True in Production!!!
-    response.set_cookie("CSRF-TOKEN", value="", max_age=0, secure=True, httponly=False, samesite="lax")
+    response.set_cookie(
+        "CSRF-TOKEN",
+        value="",
+        max_age=0,
+        httponly=False,
+        samesite="lax",
+        secure=is_csrf_cookie_secure,  # IMPORTANT: Set this to True in Production!!!
+    )

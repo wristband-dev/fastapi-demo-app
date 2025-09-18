@@ -1,15 +1,8 @@
-# Standard library imports
-from datetime import datetime, timedelta
+from fastapi import APIRouter, Request, Response
+from wristband.fastapi_auth import CallbackData, CallbackResult, CallbackResultType, LogoutConfig
 
-from fastapi import APIRouter, Request
-from fastapi.responses import Response
-
-# Wristband imports
-from wristband.fastapi_auth import CallbackData, CallbackResult, CallbackResultType, LoginConfig, LogoutConfig
-
-# Local imports
 from auth.wristband import wristband_auth
-from models.session_data import SessionData
+from models.schemas import SessionData
 from utils.csrf import create_csrf_token, delete_csrf_cookie, update_csrf_cookie
 
 router = APIRouter()
@@ -18,8 +11,7 @@ router = APIRouter()
 @router.get("/login")
 async def login(request: Request) -> Response:
     # Construct the authorize request URL and redirect to the Wristband Authorize Endpoint
-    resp: Response = await wristband_auth.login(req=request)
-    return resp
+    return await wristband_auth.login(req=request)
 
 
 @router.get("/callback")
@@ -36,8 +28,7 @@ async def callback(request: Request) -> Response:
     session_data: SessionData = SessionData(
         is_authenticated=True,
         access_token=callback_data.access_token,
-        # Convert the "expiresIn" seconds into milliseconds from the epoch.
-        expires_at=int((datetime.now() + timedelta(seconds=callback_data.expires_in)).timestamp() * 1000),
+        expires_at=callback_data.expires_at,
         refresh_token=callback_data.refresh_token or None,
         user_id=callback_data.user_info["sub"],
         tenant_id=callback_data.user_info["tnt_id"],

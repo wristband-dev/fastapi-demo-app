@@ -7,7 +7,7 @@ import httpx
 logger = logging.getLogger(__name__)
 
 
-class WristbandApiClient:
+class WristbandService:
     def __init__(self) -> None:
         application_vanity_domain = os.getenv("APPLICATION_VANITY_DOMAIN")
         if not application_vanity_domain:
