@@ -12,7 +12,7 @@ wristband_auth: WristbandAuth = WristbandAuth(
         client_id=os.getenv("CLIENT_ID", ""),
         client_secret=os.getenv("CLIENT_SECRET", ""),
         wristband_application_vanity_domain=os.getenv("APPLICATION_VANITY_DOMAIN", ""),
-        dangerously_disable_secure_cookies=True,  # IMPORTANT: Set this to True in Production!!
+        dangerously_disable_secure_cookies=True,  # IMPORTANT: Set this to False in Production!!
     )
 )
 
