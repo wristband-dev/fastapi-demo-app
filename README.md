@@ -154,10 +154,10 @@ The application in this repository utilizes the Backend for Frontend (BFF) patte
 - Orchestrating all API calls from the frontend to Wristband.
 - Destroying the application session cookie and revoking the refresh token when a user logs out.
 
-API calls made from React to FastAPI pass along the application session cookie and a [CSRF token header](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#double-submit-cookie) (parsed from the CSRF cookie) with every request.  The server has an auth middleware for all protected routes responsbile for:
+API calls made from React to FastAPI pass along the application session cookie and a [CSRF token header](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#double-submit-cookie) (parsed from the CSRF cookie) with every request.  The server has a session auth Dependency for all protected routes responsbile for:
 
 - Validating the session and refreshing the access token (if necessary)
-- Validating the CSRF tokena
+- Validating the CSRF tokens
 
 Wristband hosts all onboarding workflow pages (signup, login, etc), and the FastAPI server will redirect to Wristband in order to show users those pages.
 
@@ -174,19 +174,6 @@ This demo app is leveraging the [Wristband fastapi-auth SDK](https://github.com/
 ## Wristband React Client Auth SDK
 
 This demo app is leveraging the [Wristband react-client-auth SDK](https://github.com/wristband-dev/react-client-auth) for any authenticated session interaction in the React frontend. Refer to that GitHub repository for more information.
-
-<br/>
-
-## CSRF Protection
-
-Cross Site Request Forgery (CSRF) is a security vulnerability where attackers trick authenticated users into unknowingly submitting malicious requests to your application. This demo app is leveraging a technique called the Syncrhonizer Token Pattern to mitigate CSRF attacks by employing two cookies: a session cookie for user authentication and a CSRF token cookie containing a unique token. With each request, the CSRF token is included both in the cookie and the request payload, enabling server-side validation to prevent CSRF attacks.
-
-Refer to the [OWASP CSRF Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html) for more information about this topic.
-
-> [!WARNING]
-> Your own application should take effort to mitigate CSRF attacks in addition to any Wristband authentication, and it is highly recommended to take a similar approach as this demo app to protect against thse types of attacks.
-
-Within the demo app code base, you can search in your IDE of choice for the text `CSRF_TOUCHPOINT`.  This will show the various places in both the React frontend code and FastAPI backend code where CSRF is involved.
 
 <br/>
 
