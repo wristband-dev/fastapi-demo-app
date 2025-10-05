@@ -1,7 +1,6 @@
 import json
 import logging
 from datetime import datetime
-
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from wristband.python_jwt import JWTPayload
 
@@ -12,7 +11,7 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-@router.post("", response_model=HelloWorldResponse)
+@router.post("")
 async def say_hello(request: Request, jwt_payload: JWTPayload = Depends(require_jwt_auth)) -> HelloWorldResponse:
     try:
         # If needed, you can access the contents of the JWT payload in your routes.

@@ -3,12 +3,12 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from wristband.fastapi_auth import SessionMiddleware
 
 # Load environment variables BEFORE local imports
 load_dotenv()
 
 # Local imports
-from middleware.encrypted_session_middleware import EncryptedSessionMiddleware
 from routes import router as all_routes
 
 
@@ -17,21 +17,19 @@ def create_app() -> FastAPI:
 
     if not logging.getLogger().hasHandlers():
         logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s in %(name)s: %(message)s")
+    
+    # Enable DEBUG logging for Wristband SDK
+    logging.getLogger("wristband.fastapi_auth").setLevel(logging.DEBUG)
 
     ########################################################################################
     # IMPORTANT: FastAPI middleware runs in reverse order of the way it is added below!!
     ########################################################################################
 
-    # 1) Add encrypted session middleware. In your Production app, you can use any kind of session library
-    # or storage that you prefer. We use this cookie-based approach because it is lightweight and doesn't
-    # require hardware/infrastructure.
+    # WRISTBAND_TOUCHPOINT
+    # 1) Add encrypted cookie-based session middleware.
     app.add_middleware(
-        EncryptedSessionMiddleware,
-        cookie_name="session",
+        SessionMiddleware,
         secret_key="dummy_67f44f4964e6c998dee827110c",
-        max_age=1800,  # 30 minutes
-        path="/",
-        same_site="lax",
         secure=False  # IMPORTANT: Set to True in production!!
     )
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useWristbandToken, redirectToLogin, useWristbandSession } from '@wristband/react-client-auth';
+import { useWristbandToken, redirectToLogin, useWristbandSession, WristbandError } from '@wristband/react-client-auth';
 
 import { SessionData } from 'types';
 
@@ -36,7 +36,12 @@ export function HelloWorldTester() {
       setMessage(data.message);
     } catch (error) {
       console.log(error);
-      window.alert(`Unexpected error: ${error}`);
+      if (error instanceof WristbandError) {
+        window.alert('Authentication required.');
+        redirectToLogin('/api/auth/login', { tenantDomain: tenantDomainName });
+      } else {
+        window.alert(`Unexpected error: ${error}`);
+      }
     } finally {
       setIsHelloWorldLoading(false);
     }
