@@ -53,8 +53,8 @@ export function HelloWorldTester() {
       <p>
         This button demonstrates token-based authentication as an alternative to cookies. The useWristbandToken() hook
         from the React SDK fetches and caches access tokens via the getToken() function. When clicked, this button sends
-        the token manually in the Authorization header to the protected endpoint. The server&apos;s JwtAuthMiddleware
-        validates the JWT token rather than relying on session cookies.
+        the token manually in the Authorization header to the protected endpoint. The server&apos;s
+        &quot;require_jwt_auth&quot; Dependency validates the JWT token rather than relying on session cookies.
       </p>
       <button
         onClick={sayHello}

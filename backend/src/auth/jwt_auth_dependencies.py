@@ -24,7 +24,7 @@ async def require_jwt_auth(request: Request) -> JWTPayload:
     logger.info(f"Executing JWT validation for: {request.method} {request.url.path}...")
 
     try:
-        # WRISTBAND_TOUCHPOINT - AUTHENTICATION: Extract and validate Bearer token from Authorization header
+        # WRISTBAND_TOUCHPOINT: Extract and validate Bearer token from Authorization header
         auth_header = request.headers.get("authorization")
         token = wristband_jwt.extract_bearer_token(auth_header)
         result: JwtValidationResult = wristband_jwt.validate(token)
@@ -35,7 +35,6 @@ async def require_jwt_auth(request: Request) -> JWTPayload:
 
         # Return the validated payload for use in routes
         return cast(JWTPayload, result.payload)
-
     except Exception as e:
         logger.exception(f"JWT validation error: {str(e)}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
