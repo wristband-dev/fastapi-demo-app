@@ -1,12 +1,12 @@
+// Type that maps to the `metadata` returned from the FastAPI Session Endpoint.
 export type SessionData = {
   isAuthenticated: boolean;
   accessToken: string;
   expiresAt: number;
-  refreshToken?: string;
-  userId: string;
-  tenantId: string;
-  idpName: string;
-  tenantDomainName: string;
-  tenantCustomDomain?: string;
+  tenantName: string;
+  identityProviderName: string;
   csrfToken: string;
+  customField: string;
+  refreshToken?: string;
+  tenantCustomDomain?: string;
 };
