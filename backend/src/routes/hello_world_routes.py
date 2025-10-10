@@ -11,6 +11,7 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+# WRISTBAND_TOUCHPOINT: Endpoint-level JWT validation
 @router.post("")
 async def say_hello(request: Request, jwt_payload: JWTPayload = Depends(require_jwt_auth)) -> HelloWorldResponse:
     try:

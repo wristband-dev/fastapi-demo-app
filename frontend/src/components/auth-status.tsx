@@ -8,7 +8,7 @@ export function AuthStatus() {
 
   /* WRISTBAND_TOUCHPOINT - AUTHENTICATION */
   const { isAuthenticated, isLoading } = useWristbandAuth();
-  const { metadata } = useWristbandSession<SessionData>();
+  const { userId, tenantId, metadata } = useWristbandSession<SessionData>();
 
   const toggleAccordion = () => {
     setIsExpanded(!isExpanded);
@@ -46,7 +46,9 @@ export function AuthStatus() {
 
           {isExpanded && (
             <div className="bg-white dark:bg-gray-800 p-2 rounded max-h-40 overflow-auto animate-in slide-in-from-top-2 duration-200">
-              <pre className="text-xs whitespace-pre-wrap break-all">{JSON.stringify(metadata, null, 2)}</pre>
+              <pre className="text-xs whitespace-pre-wrap break-all">
+                {JSON.stringify({ userId, tenantId, ...metadata }, null, 2)}
+              </pre>
             </div>
           )}
         </div>

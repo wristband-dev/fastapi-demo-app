@@ -1,8 +1,16 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from wristband.fastapi_auth import CallbackResult, CallbackResultType, LogoutConfig, SessionResponse, TokenResponse
+from wristband.fastapi_auth import (
+  CallbackResult,
+  CallbackResultType,
+  get_session,
+  LogoutConfig,
+  SessionResponse,
+  TokenResponse
+)
 
 from auth.wristband import require_session_auth, wristband_auth
+from models.schemas import MySession
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -17,16 +25,18 @@ async def login(request: Request) -> Response:
 
 # WRISTBAND_TOUCHPOINT: Callback Endpoint
 @router.get("/callback")
-async def callback(request: Request) -> Response:
+async def callback(request: Request, session: MySession = Depends(get_session)) -> Response:
     # Get callback result
     callback_result: CallbackResult = await wristband_auth.callback(request)
 
     # If redirect required, return redirect response
     if callback_result.type == CallbackResultType.REDIRECT_REQUIRED:
-        return await wristband_auth.create_callback_response(request, callback_result.redirect_url)  # type: ignore
+        assert callback_result.redirect_url is not None
+        return await wristband_auth.create_callback_response(request, callback_result.redirect_url)
 
     # Create a session for the authenticated user.
-    request.state.session.from_callback(callback_result.callback_data)
+    assert callback_result.callback_data is not None
+    session.from_callback(callback_data=callback_result.callback_data, custom_fields={ "custom_field": "example" })
 
     # Return the callback response that redirects to your app.
     return await wristband_auth.create_callback_response(request, "http://localhost:6001/home")
@@ -34,46 +44,46 @@ async def callback(request: Request) -> Response:
 
 # WRISTBAND_TOUCHPOINT: Logout Endpoint
 @router.get("/logout")
-async def logout(request: Request) -> Response:
-    # Log out the user and redirect to the Wristband Logout Endpoint
-    response: Response = await wristband_auth.logout(
-        request=request,
-        config=LogoutConfig(
-            refresh_token=request.state.session.refresh_token,
-            tenant_custom_domain=request.state.session.tenant_custom_domain,
-            tenant_name=request.state.session.tenant_name,
-        ),
+async def logout(request: Request, session: MySession = Depends(get_session)) -> Response:
+    # Get all necessary session data needed to perform logout
+    logout_config = LogoutConfig(
+        refresh_token=session.refresh_token,
+        tenant_custom_domain=session.tenant_custom_domain,
+        tenant_name=session.tenant_name,
     )
 
     # Delete the session and CSRF cookies.
-    request.state.session.clear()
-    return response
+    session.clear()
+
+    # Log out the user and redirect to the Wristband Logout Endpoint
+    return await wristband_auth.logout(request, logout_config)
 
 
-# WRISTBAND_TOUCHPOINT: Check auth for this protected route
-@router.get("/session", dependencies=[Depends(require_session_auth)])
-async def get_session(request: Request) -> SessionResponse:
+# WRISTBAND_TOUCHPOINT: Session Endpoint
+@router.get("/session")
+async def get_session_response(session: MySession = Depends(require_session_auth)) -> SessionResponse:
     try:
-        return request.state.session.get_session_response(metadata={
-            "isAuthenticated": request.state.session.is_authenticated,
-            "accessToken": request.state.session.access_token,
-            "expiresAt": request.state.session.expires_at,
-            "userId": request.state.session.user_id,
-            "tenantId": request.state.session.tenant_id,
-            "tenantName": request.state.session.tenant_name,
-            "csrfToken": request.state.session.csrf_token,
-            "refreshToken": request.state.session.refresh_token,
+        print(f"{session}")
+        return session.get_session_response(metadata={
+            "isAuthenticated": session.is_authenticated,
+            "accessToken": session.access_token,
+            "expiresAt": session.expires_at,
+            "tenantName": session.tenant_name,
+            "identityProviderName": session.identity_provider_name,
+            "csrfToken": session.csrf_token,
+            "refreshToken": session.refresh_token,
+            "customField": session.custom_field,
         })
     except Exception as e:
         logger.exception(f"Unexpected Get Session Endpoint error: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# WRISTBAND_TOUCHPOINT: Check auth for this protected route
-@router.get("/token", dependencies=[Depends(require_session_auth)])
-async def get_token(request: Request) -> TokenResponse:
+# WRISTBAND_TOUCHPOINT: Token Endpoint
+@router.get("/token")
+async def get_token_response(session: MySession = Depends(require_session_auth)) -> TokenResponse:
     try:
-        return request.state.session.get_token_response()
+        return session.get_token_response()
     except Exception as e:
         logger.exception(f"Unexpected Get Token Endpoint error: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

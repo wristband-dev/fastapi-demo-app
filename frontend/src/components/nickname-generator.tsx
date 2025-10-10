@@ -62,8 +62,8 @@ export function NicknameGenerator() {
       <p>
         This button demonstrates cookie-based authentication for API calls. When clicked, the browser automatically
         sends the session cookie to the FastAPI server. The configured Axios client includes the CSRF token in the
-        request headers for additional security. The server&apos;s SessionCookieAuthMiddleware validates both the
-        session cookie and CSRF token before allowing access to protected resources.
+        request headers for additional security. The server&apos;s &quot;require_session_auth&quot; Dependency validates
+        both the session cookie and CSRF token before allowing access to protected resources.
       </p>
       <button
         onClick={generateNewNickname}
