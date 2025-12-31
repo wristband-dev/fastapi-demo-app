@@ -2,9 +2,9 @@ import json
 import logging
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from wristband.python_jwt import JWTPayload
+from wristband.fastapi_auth import JWTAuthResult
 
-from auth.jwt_auth_dependencies import require_jwt_auth
+from auth.wristband import require_jwt_auth
 from models.schemas import HelloWorldResponse
 
 router = APIRouter()
@@ -13,10 +13,10 @@ logger = logging.getLogger(__name__)
 
 # WRISTBAND_TOUCHPOINT: Endpoint-level JWT validation
 @router.post("")
-async def say_hello(request: Request, jwt_payload: JWTPayload = Depends(require_jwt_auth)) -> HelloWorldResponse:
+async def say_hello(request: Request, auth: JWTAuthResult = Depends(require_jwt_auth)) -> HelloWorldResponse:
     try:
         # If needed, you can access the contents of the JWT payload in your routes.
-        logger.info(f"Successful JWT validation for user: {getattr(jwt_payload, 'sub', 'unknown')}")
+        logger.info(f"Successful JWT validation for user: {getattr(auth.payload, 'sub', 'unknown')}")
 
         body = await request.json()
         if "message" not in body or body["message"] != "Hello":

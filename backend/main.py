@@ -11,8 +11,6 @@ load_dotenv()
 # Local imports
 from routes import router as all_routes
 
-DUMMY_SESSION_SECRET = "dummy_67f44f4964e6c998dee827110c"
-
 
 def create_app() -> FastAPI:
     app = FastAPI()
@@ -27,9 +25,11 @@ def create_app() -> FastAPI:
     # IMPORTANT: FastAPI middleware runs in reverse order of the way it is added below!!
     ########################################################################################
 
-    # WRISTBAND_TOUCHPOINT: IMPORTANT - Set to `secure=True` in production!!
-    # 1) Add encrypted cookie-based session middleware.
-    app.add_middleware(SessionMiddleware, secret_key=DUMMY_SESSION_SECRET, secure=False)
+    # WRISTBAND_TOUCHPOINT
+    # 1) Add session middleware for encrypted cookie-based session management.
+    # NOTE: User data and session functions are made available via `request.state.session`.
+    # NOTE: In production, use a strong secret and set `secure=True`!!
+    app.add_middleware(SessionMiddleware, secret_key="dummy_67f44f4964e6c998dee827110c", secure=False)
 
     # 2) Add CORS middleware
     app.add_middleware(

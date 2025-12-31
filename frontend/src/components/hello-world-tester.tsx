@@ -10,7 +10,7 @@ export function HelloWorldTester() {
   /* WRISTBAND_TOUCHPOINT - AUTHENTICATION */
   const { getToken } = useWristbandToken();
   const { metadata } = useWristbandSession<SessionData>();
-  const { tenantDomainName } = metadata;
+  const { tenantName } = metadata;
 
   const sayHello = async () => {
     try {
@@ -24,7 +24,7 @@ export function HelloWorldTester() {
 
       if (!response.ok) {
         if ([401, 403].includes(response.status)) {
-          redirectToLogin('/api/auth/login', { tenantDomain: tenantDomainName });
+          redirectToLogin('/api/auth/login', { tenantName });
           window.alert('Authentication required.');
         } else {
           window.alert(`HTTP error! status: ${response.status}`);
@@ -38,7 +38,7 @@ export function HelloWorldTester() {
       console.log(error);
       if (error instanceof WristbandError) {
         window.alert('Authentication required.');
-        redirectToLogin('/api/auth/login', { tenantDomain: tenantDomainName });
+        redirectToLogin('/api/auth/login', { tenantName });
       } else {
         window.alert(`Unexpected error: ${error}`);
       }
