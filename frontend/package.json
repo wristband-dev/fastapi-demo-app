@@ -5,8 +5,8 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=18.12.1",
-    "npm": ">=8.19.2"
+    "node": ">=20.0.0",
+    "npm": ">=9.6.0"
   },
   "scripts": {
     "dev": "node scripts/run-dev.js",
@@ -17,8 +17,8 @@
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix"
   },
   "dependencies": {
-    "@wristband/react-client-auth": "^2.0.0",
-    "axios": "^1.12.2",
+    "@wristband/react-client-auth": "^3.0.0",
+    "axios": "^1.13.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router": "^7.8.0"
@@ -42,7 +42,7 @@
     "prettier": "^2.8.8",
     "tailwindcss": "^3.3.0",
     "typescript": "^5.9.2",
-    "vite": "^7.1.5",
+    "vite": "^7.3.0",
     "vite-plugin-svgr": "^4.3.0",
     "vite-tsconfig-paths": "^5.1.4"
   }

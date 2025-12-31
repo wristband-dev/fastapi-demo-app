@@ -12,7 +12,7 @@ export function NicknameGenerator() {
   /* WRISTBAND_TOUCHPOINT - AUTHENTICATION */
   const { isAuthenticated, isLoading } = useWristbandAuth();
   const { metadata } = useWristbandSession<SessionData>();
-  const { tenantDomainName } = metadata;
+  const { tenantName } = metadata;
 
   useEffect(() => {
     if (isAuthenticated && !isLoading && !nickname) {
@@ -49,7 +49,7 @@ export function NicknameGenerator() {
     setNickname('');
 
     if (isAxiosError(error) && error.response && [401, 403].includes(error.response.status)) {
-      redirectToLogin('/api/auth/login', { tenantDomain: tenantDomainName });
+      redirectToLogin('/api/auth/login', { tenantName });
       window.alert('Authentication required.');
     } else {
       window.alert(`Error: ${error}`);
@@ -63,7 +63,7 @@ export function NicknameGenerator() {
         This button demonstrates cookie-based authentication for API calls. When clicked, the browser automatically
         sends the session cookie to the FastAPI server. The configured Axios client includes the CSRF token in the
         request headers for additional security. The server&apos;s &quot;require_session_auth&quot; Dependency validates
-        both the session cookie and CSRF token before allowing access to protected resources.
+        the session cookie before allowing access to protected resources.
       </p>
       <button
         onClick={generateNewNickname}

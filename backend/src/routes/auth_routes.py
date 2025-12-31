@@ -2,9 +2,9 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from wristband.fastapi_auth import (
   CallbackResult,
-  CallbackResultType,
   get_session,
   LogoutConfig,
+  RedirectRequiredCallbackResult,
   SessionResponse,
   TokenResponse
 )
@@ -30,13 +30,12 @@ async def callback(request: Request, session: MySession = Depends(get_session)) 
     callback_result: CallbackResult = await wristband_auth.callback(request)
 
     # If redirect required, return redirect response
-    if callback_result.type == CallbackResultType.REDIRECT_REQUIRED:
-        assert callback_result.redirect_url is not None
+    if isinstance(callback_result, RedirectRequiredCallbackResult):
+        logger.info(f"Reason for Callback redirect required: {callback_result.reason}")
         return await wristband_auth.create_callback_response(request, callback_result.redirect_url)
 
     # Create a session for the authenticated user.
-    assert callback_result.callback_data is not None
-    session.from_callback(callback_data=callback_result.callback_data, custom_fields={ "custom_field": "example" })
+    session.from_callback(callback_data=callback_result.callback_data, custom_fields={"custom_field": "example"})
 
     # Return the callback response that redirects to your app.
     return await wristband_auth.create_callback_response(request, "http://localhost:6001/home")
@@ -61,9 +60,14 @@ async def logout(request: Request, session: MySession = Depends(get_session)) ->
 
 # WRISTBAND_TOUCHPOINT: Session Endpoint
 @router.get("/session")
-async def get_session_response(session: MySession = Depends(require_session_auth)) -> SessionResponse:
+async def get_session_response(
+    response: Response,
+    session: MySession = Depends(require_session_auth)
+) -> SessionResponse:
     try:
-        print(f"{session}")
+        # NOTE: Make sure the browser does not cache this response!
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Pragma"] = "no-cache"
         return session.get_session_response(metadata={
             "isAuthenticated": session.is_authenticated,
             "accessToken": session.access_token,
@@ -81,8 +85,14 @@ async def get_session_response(session: MySession = Depends(require_session_auth
 
 # WRISTBAND_TOUCHPOINT: Token Endpoint
 @router.get("/token")
-async def get_token_response(session: MySession = Depends(require_session_auth)) -> TokenResponse:
+async def get_token_response(
+    response: Response,
+    session: MySession = Depends(require_session_auth)
+) -> TokenResponse:
     try:
+        # NOTE: Make sure the browser does not cache this response!
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Pragma"] = "no-cache"
         return session.get_token_response()
     except Exception as e:
         logger.exception(f"Unexpected Get Token Endpoint error: {str(e)}")
