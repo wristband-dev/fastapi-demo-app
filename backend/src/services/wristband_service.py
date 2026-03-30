@@ -1,7 +1,7 @@
 import httpx
 import logging
 import os
-from typing import Any, cast
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -38,4 +38,4 @@ class WristbandService:
         if response.status_code != 200:
             raise ValueError(f"Error calling get_user_nickname: {response.status_code} - {response.text}")
 
-        return cast(str, response.json().get("nickname", ""))
+        return response.json().get("nickname") or ""

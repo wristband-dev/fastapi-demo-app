@@ -18,9 +18,10 @@ async def get_nickname(session: MySession = Depends(get_session)) -> NicknameRes
     """
     Get the Wristband user's existing nickname
     """
+    if session.user_id is None or session.access_token is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     try:
-        assert session.user_id is not None
-        assert session.access_token is not None
         nickname: str = await wristband_service.get_user_nickname(session.user_id, session.access_token)
         return NicknameResponse(nickname=nickname)
     except Exception as e:
@@ -33,9 +34,10 @@ async def generate_new_nickname(session: MySession = Depends(get_session)) -> Ni
     """
     Update the Wristband user with the new nickname
     """
+    if session.user_id is None or session.access_token is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     try:
-        assert session.user_id is not None
-        assert session.access_token is not None
         nickname: str = generate_nickname()
         await wristband_service.update_user_nickname(session.user_id, nickname, session.access_token)
         return NicknameResponse(nickname=nickname)
