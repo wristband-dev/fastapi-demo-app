@@ -1,6 +1,0 @@
-node_modules
-dist
-.prettierrc
-.eslintrc.json
-env.d.ts
-vite.config.ts

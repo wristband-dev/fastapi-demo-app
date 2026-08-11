@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useWristbandAuth } from '@wristband/react-client-auth';
 
 import { Logo, DarkLogo } from 'images';

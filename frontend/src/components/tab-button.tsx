@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function TabButton({ title, isActive, onClick }: { title: string; isActive: boolean; onClick: () => void }) {
   return (
     <button

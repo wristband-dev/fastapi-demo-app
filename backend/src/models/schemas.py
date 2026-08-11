@@ -1,6 +1,7 @@
+from typing import Optional, Protocol
+
 from pydantic import BaseModel, ConfigDict
 from wristband.fastapi_auth import Session
-from typing import Optional, Protocol
 
 
 # WRISTBAND_TOUCHPOINT: Extend Session Protocol

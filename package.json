@@ -5,8 +5,8 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.0.0",
-    "npm": ">=9.6.0"
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
   },
   "scripts": {
     "backend": "(cd backend && make run)",
@@ -21,6 +21,6 @@
     "start": "concurrently --kill-others-on-fail --names \"backend,frontend\" --prefix-colors \"green,yellow\" \"npm run backend\" \"sleep 3 && npm run frontend\""
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^10.0.4"
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { redirectToLogout } from '@wristband/react-client-auth';
 
 export function LogoutButton() {
