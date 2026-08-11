@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useWristbandToken, redirectToLogin, useWristbandSession, WristbandError } from '@wristband/react-client-auth';
 
 import { SessionData } from 'types';

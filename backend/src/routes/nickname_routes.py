@@ -1,4 +1,5 @@
 import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from wristband.fastapi_auth import get_session
 

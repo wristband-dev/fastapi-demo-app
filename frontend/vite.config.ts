@@ -16,7 +16,7 @@ export default defineConfig({
     viteTsconfigPaths()
   ],
   server: {
-    allowedHosts: ['.business.invotastic.com', 'localhost'],
+    allowedHosts: ['localhost'],
     cors: true,
     port: 6001,
     proxy: {

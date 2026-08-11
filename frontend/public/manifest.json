@@ -1,6 +1,6 @@
 {
-  "short_name": "Invotastic for Business",
-  "name": "Invotastic for Business Demo App",
+  "short_name": "Wristband Auth FastAPI Demo",
+  "name": "Wristband Auth FastAPI Demo",
   "icons": [
     {
       "src": "favicon.ico",

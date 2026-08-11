@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { spawn } = require('child_process');
 
 const port = 6001;

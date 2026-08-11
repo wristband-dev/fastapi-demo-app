@@ -1,12 +1,13 @@
 import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from wristband.fastapi_auth import (
-  CallbackResult,
-  get_session,
-  LogoutConfig,
-  RedirectRequiredCallbackResult,
-  SessionResponse,
-  TokenResponse
+    CallbackResult,
+    LogoutConfig,
+    RedirectRequiredCallbackResult,
+    SessionResponse,
+    TokenResponse,
+    get_session,
 )
 
 from auth.wristband import require_session_auth, wristband_auth
@@ -61,23 +62,24 @@ async def logout(request: Request, session: MySession = Depends(get_session)) ->
 # WRISTBAND_TOUCHPOINT: Session Endpoint
 @router.get("/session")
 async def get_session_response(
-    response: Response,
-    session: MySession = Depends(require_session_auth)
+    response: Response, session: MySession = Depends(require_session_auth)
 ) -> SessionResponse:
     try:
         # NOTE: Make sure the browser does not cache this response!
         response.headers["Cache-Control"] = "no-store"
         response.headers["Pragma"] = "no-cache"
-        return session.get_session_response(metadata={
-            "isAuthenticated": session.is_authenticated,
-            "accessToken": session.access_token,
-            "expiresAt": session.expires_at,
-            "tenantName": session.tenant_name,
-            "identityProviderName": session.identity_provider_name,
-            "csrfToken": session.csrf_token,
-            "refreshToken": session.refresh_token,
-            "customField": session.custom_field,
-        })
+        return session.get_session_response(
+            metadata={
+                "isAuthenticated": session.is_authenticated,
+                "accessToken": session.access_token,
+                "expiresAt": session.expires_at,
+                "tenantName": session.tenant_name,
+                "identityProviderName": session.identity_provider_name,
+                "csrfToken": session.csrf_token,
+                "refreshToken": session.refresh_token,
+                "customField": session.custom_field,
+            }
+        )
     except Exception as e:
         logger.exception(f"Unexpected Get Session Endpoint error: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -85,10 +87,7 @@ async def get_session_response(
 
 # WRISTBAND_TOUCHPOINT: Token Endpoint
 @router.get("/token")
-async def get_token_response(
-    response: Response,
-    session: MySession = Depends(require_session_auth)
-) -> TokenResponse:
+async def get_token_response(response: Response, session: MySession = Depends(require_session_auth)) -> TokenResponse:
     try:
         # NOTE: Make sure the browser does not cache this response!
         response.headers["Cache-Control"] = "no-store"

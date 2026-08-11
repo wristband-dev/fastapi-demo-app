@@ -1,6 +1,7 @@
 import json
 import logging
 from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from wristband.fastapi_auth import JWTAuthResult
 

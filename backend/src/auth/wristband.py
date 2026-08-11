@@ -1,4 +1,5 @@
 import os
+
 from wristband.fastapi_auth import AuthConfig, WristbandAuth
 
 # Explicitly define what can be imported
